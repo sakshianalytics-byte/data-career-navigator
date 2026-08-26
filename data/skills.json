@@ -24,7 +24,15 @@
     { "id": "stakeholder_mgmt",   "label": "Stakeholder Management",   "category": "business" },
     { "id": "problem_framing",    "label": "Problem Framing",          "category": "business" },
     { "id": "product_mgmt",       "label": "Product Management",       "category": "business" },
-    { "id": "domain_knowledge",   "label": "Domain / Industry Knowledge", "category": "business" }
+    { "id": "domain_knowledge",   "label": "Domain / Industry Knowledge", "category": "business" },
+    { "id": "people_mgmt",        "label": "People Management",        "category": "business" },
+    { "id": "operations",         "label": "Operations & Process Design", "category": "business" },
+    { "id": "strategy",           "label": "Strategy & Business Planning", "category": "business" },
+    { "id": "documentation",      "label": "Documentation & Technical Writing", "category": "business" },
+    { "id": "data_governance",    "label": "Data Governance",          "category": "business" },
+    { "id": "risk_analysis",      "label": "Risk Analysis",            "category": "business" },
+    { "id": "regulatory_compliance", "label": "Regulatory Compliance", "category": "business" },
+    { "id": "financial_analysis", "label": "Financial Analysis",       "category": "analytics" }
   ],
   "transferable_categories": ["business", "analytics"],
   "technical_categories": ["data", "engineering", "ai"]

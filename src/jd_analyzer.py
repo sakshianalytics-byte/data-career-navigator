@@ -65,6 +65,14 @@ _SKILL_TO_TASKS: dict[str, list[str]] = {
     "problem_framing": ["problem_framing"],
     "product_mgmt": ["problem_framing", "stakeholder_management"],
     "domain_knowledge": ["business_interpretation"],
+    "people_mgmt": ["leadership_mentoring"],
+    "operations": ["data_pipeline_ops", "problem_framing"],
+    "strategy": ["problem_framing"],
+    "documentation": ["documentation"],
+    "data_governance": ["governance_compliance"],
+    "risk_analysis": ["exploratory_analysis", "governance_compliance"],
+    "regulatory_compliance": ["governance_compliance"],
+    "financial_analysis": ["exploratory_analysis", "business_interpretation"],
 }
 
 

@@ -392,8 +392,39 @@ def estimate_transition_time(transition_score_val: int) -> str:
 # 6. Top-level orchestration
 # ---------------------------------------------------------------------------
 
-def recommend_transitions(profile: dict[str, Any], top_n: int = 5) -> list[dict[str, Any]]:
-    """Score every seed role as a possible destination and rank them."""
+# Which role families belong to each growth direction the user can pick.
+DIRECTION_FAMILIES = {
+    "ic_tech":    {"engineering", "architecture", "science", "analytics_ai"},
+    "ic_nontech": {"analytics", "product", "risk", "finance"},
+    "people":     {"management"},
+}
+
+
+def _direction_boost(role: dict[str, Any], direction: str | None) -> float:
+    """
+    Ranking nudge toward the user's chosen track. Roles whose family is on the
+    chosen axis get a positive boost; clearly off-axis roles get a small penalty.
+    Returns a delta added to the rank key (kept modest so fit still dominates).
+    """
+    if not direction or direction not in DIRECTION_FAMILIES:
+        return 0.0
+    fam = role.get("family")
+    if fam in DIRECTION_FAMILIES[direction]:
+        return 12.0
+    # people <-> IC are the strongest opposites; penalize the cross a bit more
+    if direction == "people" and fam in (DIRECTION_FAMILIES["ic_tech"] | DIRECTION_FAMILIES["ic_nontech"]):
+        return -6.0
+    if direction in ("ic_tech", "ic_nontech") and fam == "management":
+        return -6.0
+    return 0.0
+
+
+def recommend_transitions(profile: dict[str, Any], top_n: int = 5,
+                          direction: str | None = None) -> list[dict[str, Any]]:
+    """
+    Score every seed role as a destination and rank them. If `direction` is set
+    (ic_tech / ic_nontech / people), recommendations are nudged toward that track.
+    """
     current = closest_role(profile)
     current_id = current["role"]["id"]
 
@@ -431,15 +462,18 @@ def recommend_transitions(profile: dict[str, Any], top_n: int = 5) -> list[dict[
             },
         })
 
-    # rank primarily by future fit, but blend with transition realism
+    # rank primarily by future fit, blend with transition realism, then nudge
+    # toward the user's chosen growth direction.
     results.sort(
-        key=lambda r: 0.6 * r["future_fit"] + 0.4 * r["transition_score"],
+        key=lambda r: (0.6 * r["future_fit"] + 0.4 * r["transition_score"]
+                       + _direction_boost({"family": r["family"]}, direction)),
         reverse=True,
     )
     return results[:top_n]
 
 
-def analyze_profile(profile: dict[str, Any], top_n: int = 5) -> dict[str, Any]:
+def analyze_profile(profile: dict[str, Any], top_n: int = 5,
+                    direction: str | None = None) -> dict[str, Any]:
     """Full Career Navigator analysis for a user profile."""
     return {
         "profile": {
@@ -452,5 +486,5 @@ def analyze_profile(profile: dict[str, Any], top_n: int = 5) -> dict[str, Any]:
         "skill_profile": classify_skills(profile),
         "current_role_match": closest_role(profile)["role"]["title"],
         "ai_transformation": role_transformation_score(profile),
-        "recommendations": recommend_transitions(profile, top_n=top_n),
+        "recommendations": recommend_transitions(profile, top_n=top_n, direction=direction),
     }

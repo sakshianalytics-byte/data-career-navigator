@@ -122,7 +122,18 @@ with tab_nav:
     with col_b:
         location = st.text_input("Location", "India")
         remote_pref = st.checkbox("Prefer remote work", value=True)
-        top_n = st.slider("Number of next-role suggestions to show", 3, 8, 5)
+        direction = st.radio(
+            "Which direction do you want to grow?",
+            options=["ic_tech", "ic_nontech", "people"],
+            format_func=lambda a: {
+                "ic_tech": "Individual Contributor - Tech",
+                "ic_nontech": "Individual Contributor - Non-Tech",
+                "people": "People Management",
+            }[a],
+            help="We nudge your recommendations toward roles on this track.",
+        )
+
+    TOP_N = 4  # fixed number of next-role suggestions
 
     st.markdown("**Rate your skills - enter a score out of 100** (0 = none/emerging, 100 = expert). "
                 "Leave a skill at 0 if you don't have it yet.")
@@ -155,7 +166,7 @@ with tab_nav:
             "industry": industry, "location": location,
             "remote_preference": remote_pref,
         }
-        result = analyze_profile(profile, top_n=top_n)
+        result = analyze_profile(profile, top_n=TOP_N, direction=direction)
         active_skills = {k: v for k, v in skills.items() if v > 0}
         profile_summary = (
             f"role={title}; years={years}; industry={industry}; "
@@ -173,7 +184,7 @@ with tab_nav:
             + "]"
         )
         log_event("profile_analyzed",
-                  detail=f"match={result['current_role_match']}; skills={len(active_skills)}",
+                  detail=f"match={result['current_role_match']}; skills={len(active_skills)}; dir={direction}",
                   user_input=profile_summary,
                   output=output_summary)
         st.session_state["result"] = result
