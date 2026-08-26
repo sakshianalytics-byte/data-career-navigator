@@ -91,10 +91,26 @@ with tab_nav:
             "remote_preference": remote_pref,
         }
         result = analyze_profile(profile, top_n=top_n)
-        # Privacy-safe: log only the matched role + skill count, never user text.
         active_skills = {k: v for k, v in skills.items() if v > 0}
+        profile_summary = (
+            f"role={title}; years={years}; industry={industry}; "
+            f"location={location}; remote={remote_pref}; skills={active_skills}"
+        )
+        output_summary = (
+            f"match={result['current_role_match']}; "
+            f"ai_transformation={result['ai_transformation']['score']}; "
+            "recommendations=["
+            + " | ".join(
+                f"{r['title']}(transition={r['transition_score']},fit={r['future_fit']},"
+                f"remote={r['remote_fit']},time={r['estimated_time']})"
+                for r in result["recommendations"]
+            )
+            + "]"
+        )
         log_event("profile_analyzed",
-                  f"match={result['current_role_match']}; skills={len(active_skills)}")
+                  detail=f"match={result['current_role_match']}; skills={len(active_skills)}",
+                  user_input=profile_summary,
+                  output=output_summary)
 
         # --- Current profile ---
         st.subheader("2. Where you are today")
@@ -210,8 +226,16 @@ with tab_jd:
 
     if analyze:
         jd = analyze_jd(jd_text)
-        # Privacy-safe: log only the takeover % and task count, never the JD text.
-        log_event("jd_analyzed", f"takeover={jd['ai_takeover_pct']}; tasks={jd['tasks_detected']}")
+        jd_output = (
+            f"takeover={jd['ai_takeover_pct']}%; "
+            f"ai_takeover=[{', '.join(a['task'] for a in jd['ai_takeover_actions'])}]; "
+            f"hybrid=[{', '.join(a['task'] for a in jd['hybrid_actions'])}]; "
+            f"human_critical=[{', '.join(a['task'] for a in jd['human_critical_actions'])}]"
+        )
+        log_event("jd_analyzed",
+                  detail=f"takeover={jd['ai_takeover_pct']}; tasks={jd['tasks_detected']}",
+                  user_input=jd_text,
+                  output=jd_output)
         if jd["tasks_detected"] == 0:
             st.warning(jd["summary"])
         else:
@@ -252,6 +276,7 @@ st.caption(
     "(same schema in src/data_loader.py) for authoritative numbers. MIT licensed."
 )
 st.caption(
-    "Privacy: anonymous usage events (e.g. 'analysis run') may be logged to improve the app. "
-    "Your typed inputs and pasted job descriptions are never stored."
+    "Note: to improve the app, the inputs you submit (profile fields and pasted job "
+    "descriptions) and anonymous usage events are recorded. No names or personal "
+    "identifiers are collected."
 )

@@ -45,7 +45,11 @@ except Exception:  # pragma: no cover
 
 
 # Column order written to the sheet. Keep this stable.
-_HEADERS = ["timestamp_utc", "session_id", "event", "detail"]
+_HEADERS = ["timestamp_utc", "session_id", "event", "detail", "input", "output"]
+
+# Cap stored input/output length so a huge value can't create an unwieldy cell.
+_MAX_INPUT_CHARS = 2000
+_MAX_OUTPUT_CHARS = 4000
 
 
 def _get_session_id() -> str:
@@ -104,16 +108,21 @@ else:  # pragma: no cover
     _worksheet = _build_worksheet
 
 
-def log_event(event: str, detail: str = "") -> None:
+def log_event(event: str, detail: str = "", user_input: str = "",
+              output: str = "") -> None:
     """
-    Record one usage event. Best-effort and privacy-safe.
+    Record one usage event. Best-effort; never crashes the app.
 
     Parameters
     ----------
     event : short event type, e.g. "app_open", "profile_analyzed", "jd_analyzed",
-            "explain_requested". Use a small, fixed vocabulary.
-    detail : coarse, non-personal metadata only (e.g. a role family or a bucketed
-             number). Do NOT pass resume/JD text here.
+            "explain_viewed". Use a small, fixed vocabulary.
+    detail : coarse computed metadata (e.g. matched role, takeover %).
+    user_input : the content the user submitted (structured profile summary or
+            pasted job description). Truncated to _MAX_INPUT_CHARS.
+            The app collects no names or personal identifiers.
+    output : a summary of what the agent returned to the user. Truncated to
+            _MAX_OUTPUT_CHARS.
     """
     if not _enabled():
         return
@@ -123,6 +132,8 @@ def log_event(event: str, detail: str = "") -> None:
             _get_session_id(),
             str(event)[:60],
             str(detail)[:120],
+            str(user_input)[:_MAX_INPUT_CHARS],
+            str(output)[:_MAX_OUTPUT_CHARS],
         ]
         _worksheet().append_row(row, value_input_option="RAW")
     except Exception:
