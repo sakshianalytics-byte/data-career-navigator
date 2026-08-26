@@ -1,0 +1,8 @@
+numpy>=1.24
+pandas>=2.0
+# Optional UI (for hosting a web demo)
+streamlit>=1.30
+# Optional notebook tooling
+jupyter>=1.0
+# Optional LLM layer (only needed if you enable richer narrative generation)
+# openai>=1.0

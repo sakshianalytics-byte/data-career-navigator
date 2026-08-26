@@ -1,0 +1,131 @@
+{
+  "_note": "Task archetypes used to (1) build the current-role AI transformation table and (2) classify free-text job descriptions. 'impact' is one of automated | ai_assisted | ai_augmented | human_critical. 'exposure' is 0-100 (share of the task AI can perform). 'keywords' are lowercase substrings used to match JD sentences to this archetype. 'human_value' explains what stays human.",
+  "impact_levels": {
+    "automated":     { "label": "Automated",     "color": "red",    "exposure_default": 85, "meaning": "AI can perform most of this task with light oversight." },
+    "ai_assisted":   { "label": "AI-Assisted",   "color": "orange", "exposure_default": 65, "meaning": "AI drafts or accelerates; a human reviews and finalizes." },
+    "ai_augmented":  { "label": "AI-Augmented",  "color": "yellow", "exposure_default": 40, "meaning": "AI boosts a human who stays firmly in control." },
+    "human_critical":{ "label": "Human-Critical","color": "green",  "exposure_default": 12, "meaning": "Depends on judgement, trust, or accountability AI cannot own." }
+  },
+  "tasks": [
+    {
+      "id": "recurring_reporting",
+      "label": "Recurring reporting",
+      "impact": "automated",
+      "exposure": 85,
+      "keywords": ["recurring report", "weekly report", "monthly report", "scheduled report", "generate reports", "reporting", "kpi report", "status report"],
+      "human_value": "Deciding which metrics matter and how to act on them."
+    },
+    {
+      "id": "dashboard_creation",
+      "label": "Dashboard creation",
+      "impact": "ai_assisted",
+      "exposure": 70,
+      "keywords": ["dashboard", "power bi", "tableau", "looker", "visualiz", "reporting suite", "build dashboards"],
+      "human_value": "Choosing the right questions and designing for the audience."
+    },
+    {
+      "id": "sql_generation",
+      "label": "SQL / query generation",
+      "impact": "ai_assisted",
+      "exposure": 75,
+      "keywords": ["sql", "write queries", "query", "stored procedure", "data extraction", "pull data"],
+      "human_value": "Validating correctness against messy real-world data."
+    },
+    {
+      "id": "data_cleaning",
+      "label": "Data cleaning / wrangling",
+      "impact": "ai_assisted",
+      "exposure": 68,
+      "keywords": ["data cleaning", "data wrangling", "data preparation", "etl", "transform data", "clean data", "data quality"],
+      "human_value": "Judging which anomalies are errors vs. real signal."
+    },
+    {
+      "id": "exploratory_analysis",
+      "label": "Exploratory analysis",
+      "impact": "ai_augmented",
+      "exposure": 45,
+      "keywords": ["exploratory", "ad hoc analysis", "analyze data", "deep dive", "investigate", "root cause"],
+      "human_value": "Forming hypotheses and knowing what is worth exploring."
+    },
+    {
+      "id": "coding_implementation",
+      "label": "Coding / implementation",
+      "impact": "ai_assisted",
+      "exposure": 65,
+      "keywords": ["python", "develop", "implement", "build pipeline", "write code", "programming", "software", "scripting"],
+      "human_value": "Architecture decisions and reviewing AI-generated code."
+    },
+    {
+      "id": "documentation",
+      "label": "Documentation",
+      "impact": "automated",
+      "exposure": 80,
+      "keywords": ["documentation", "document", "write docs", "technical writing", "knowledge base"],
+      "human_value": "Confirming accuracy and capturing tacit knowledge."
+    },
+    {
+      "id": "model_building",
+      "label": "Model building / ML",
+      "impact": "ai_augmented",
+      "exposure": 50,
+      "keywords": ["machine learning", "model", "predictive", "train model", "ml", "forecasting", "algorithm"],
+      "human_value": "Framing the problem and validating that the model is trustworthy."
+    },
+    {
+      "id": "business_interpretation",
+      "label": "Business interpretation of results",
+      "impact": "human_critical",
+      "exposure": 18,
+      "keywords": ["insight", "interpret", "recommend", "business impact", "actionable", "translate data", "storytelling", "narrative"],
+      "human_value": "Connecting numbers to decisions and owning the call."
+    },
+    {
+      "id": "stakeholder_management",
+      "label": "Stakeholder management",
+      "impact": "human_critical",
+      "exposure": 12,
+      "keywords": ["stakeholder", "collaborate", "cross-functional", "partner with", "communicate", "present to", "influence", "align"],
+      "human_value": "Building trust and navigating competing priorities."
+    },
+    {
+      "id": "problem_framing",
+      "label": "Problem framing / scoping",
+      "impact": "human_critical",
+      "exposure": 15,
+      "keywords": ["define requirements", "scope", "problem framing", "identify opportunities", "strategy", "roadmap", "prioritize"],
+      "human_value": "Deciding which problem is worth solving in the first place."
+    },
+    {
+      "id": "leadership_mentoring",
+      "label": "Leadership / mentoring",
+      "impact": "human_critical",
+      "exposure": 10,
+      "keywords": ["mentor", "lead", "manage team", "coach", "hire", "people management", "guide", "supervise"],
+      "human_value": "Developing people and setting direction."
+    },
+    {
+      "id": "governance_compliance",
+      "label": "Governance / compliance judgement",
+      "impact": "human_critical",
+      "exposure": 22,
+      "keywords": ["governance", "compliance", "regulatory", "privacy", "ethics", "risk", "audit", "policy"],
+      "human_value": "Accountable judgement calls regulators expect from a person."
+    },
+    {
+      "id": "data_pipeline_ops",
+      "label": "Pipeline / infra operations",
+      "impact": "ai_assisted",
+      "exposure": 60,
+      "keywords": ["pipeline", "orchestration", "airflow", "infrastructure", "deploy", "ci/cd", "monitoring", "cloud"],
+      "human_value": "Designing for reliability and handling novel failures."
+    },
+    {
+      "id": "ai_evaluation_task",
+      "label": "AI system evaluation",
+      "impact": "ai_augmented",
+      "exposure": 40,
+      "keywords": ["evaluation", "eval", "guardrail", "hallucination", "model quality", "llm", "rag", "prompt"],
+      "human_value": "Defining what 'good' means and judging edge cases."
+    }
+  ]
+}

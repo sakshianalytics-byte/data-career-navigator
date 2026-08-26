@@ -1,0 +1,245 @@
+{
+  "_note": "Curated SEED data. Each role is a skill vector (0-100 expected proficiency) plus market signals. Scores are illustrative and computed transparently. Replace with O*NET + BLS + open job-postings data for authoritative numbers. 'demand' = current market demand 0-100, 'growth' = projected growth 0-100, 'remote_share' = % of postings that are remote, 'ai_resilience' = how much the role is augmented rather than automated 0-100, 'salary_index' = relative salary 0-100 (illustrative), 'onet_code' = closest O*NET-SOC occupation for grounding.",
+  "roles": [
+    {
+      "id": "data_analyst",
+      "title": "Data Analyst",
+      "family": "analytics",
+      "onet_code": "15-2051.00",
+      "seniority": "mid",
+      "vector": {
+        "sql": 90, "data_modeling": 55, "bi_reporting": 90, "data_viz": 85, "statistics": 70,
+        "experimentation": 45, "python": 55, "software_eng": 25, "git_cicd": 25, "cloud": 30,
+        "data_engineering": 30, "dbt_semantic": 30, "machine_learning": 30, "mlops": 10,
+        "genai_llm": 25, "rag": 10, "ai_agents": 10, "ai_evaluation": 10, "prompt_eng": 30,
+        "business_analysis": 80, "stakeholder_mgmt": 75, "problem_framing": 70, "product_mgmt": 35,
+        "domain_knowledge": 70
+      },
+      "demand": 78, "growth": 55, "remote_share": 62, "ai_resilience": 55, "salary_index": 55
+    },
+    {
+      "id": "senior_data_analyst",
+      "title": "Senior Data Analyst",
+      "family": "analytics",
+      "onet_code": "15-2051.00",
+      "seniority": "senior",
+      "vector": {
+        "sql": 92, "data_modeling": 65, "bi_reporting": 90, "data_viz": 85, "statistics": 78,
+        "experimentation": 60, "python": 62, "software_eng": 30, "git_cicd": 35, "cloud": 40,
+        "data_engineering": 40, "dbt_semantic": 40, "machine_learning": 35, "mlops": 15,
+        "genai_llm": 30, "rag": 15, "ai_agents": 12, "ai_evaluation": 15, "prompt_eng": 35,
+        "business_analysis": 85, "stakeholder_mgmt": 85, "problem_framing": 80, "product_mgmt": 45,
+        "domain_knowledge": 80
+      },
+      "demand": 80, "growth": 58, "remote_share": 63, "ai_resilience": 58, "salary_index": 65
+    },
+    {
+      "id": "ai_analytics_lead",
+      "title": "AI-Augmented Analytics Lead",
+      "family": "analytics_ai",
+      "onet_code": "15-2051.00",
+      "seniority": "lead",
+      "vector": {
+        "sql": 85, "data_modeling": 70, "bi_reporting": 80, "data_viz": 78, "statistics": 75,
+        "experimentation": 65, "python": 75, "software_eng": 45, "git_cicd": 50, "cloud": 60,
+        "data_engineering": 55, "dbt_semantic": 60, "machine_learning": 55, "mlops": 40,
+        "genai_llm": 80, "rag": 70, "ai_agents": 65, "ai_evaluation": 70, "prompt_eng": 75,
+        "business_analysis": 85, "stakeholder_mgmt": 85, "problem_framing": 85, "product_mgmt": 60,
+        "domain_knowledge": 80
+      },
+      "demand": 82, "growth": 90, "remote_share": 68, "ai_resilience": 88, "salary_index": 80
+    },
+    {
+      "id": "analytics_engineer",
+      "title": "Analytics Engineer",
+      "family": "engineering",
+      "onet_code": "15-2051.00",
+      "seniority": "mid",
+      "vector": {
+        "sql": 90, "data_modeling": 85, "bi_reporting": 70, "data_viz": 60, "statistics": 60,
+        "experimentation": 50, "python": 75, "software_eng": 65, "git_cicd": 80, "cloud": 70,
+        "data_engineering": 75, "dbt_semantic": 90, "machine_learning": 40, "mlops": 45,
+        "genai_llm": 45, "rag": 35, "ai_agents": 25, "ai_evaluation": 35, "prompt_eng": 45,
+        "business_analysis": 65, "stakeholder_mgmt": 60, "problem_framing": 70, "product_mgmt": 40,
+        "domain_knowledge": 60
+      },
+      "demand": 88, "growth": 82, "remote_share": 72, "ai_resilience": 80, "salary_index": 78
+    },
+    {
+      "id": "ai_data_engineer",
+      "title": "AI Data Engineer",
+      "family": "engineering",
+      "onet_code": "15-1243.00",
+      "seniority": "senior",
+      "vector": {
+        "sql": 85, "data_modeling": 85, "bi_reporting": 45, "data_viz": 40, "statistics": 55,
+        "experimentation": 40, "python": 85, "software_eng": 80, "git_cicd": 85, "cloud": 85,
+        "data_engineering": 90, "dbt_semantic": 80, "machine_learning": 55, "mlops": 70,
+        "genai_llm": 70, "rag": 75, "ai_agents": 55, "ai_evaluation": 60, "prompt_eng": 60,
+        "business_analysis": 50, "stakeholder_mgmt": 55, "problem_framing": 65, "product_mgmt": 40,
+        "domain_knowledge": 55
+      },
+      "demand": 90, "growth": 88, "remote_share": 74, "ai_resilience": 85, "salary_index": 85
+    },
+    {
+      "id": "ai_analyst",
+      "title": "AI Analyst",
+      "family": "analytics_ai",
+      "onet_code": "15-2051.00",
+      "seniority": "mid",
+      "vector": {
+        "sql": 80, "data_modeling": 55, "bi_reporting": 70, "data_viz": 70, "statistics": 70,
+        "experimentation": 60, "python": 65, "software_eng": 35, "git_cicd": 40, "cloud": 50,
+        "data_engineering": 40, "dbt_semantic": 45, "machine_learning": 50, "mlops": 30,
+        "genai_llm": 75, "rag": 60, "ai_agents": 55, "ai_evaluation": 65, "prompt_eng": 75,
+        "business_analysis": 75, "stakeholder_mgmt": 70, "problem_framing": 75, "product_mgmt": 45,
+        "domain_knowledge": 70
+      },
+      "demand": 80, "growth": 85, "remote_share": 66, "ai_resilience": 85, "salary_index": 68
+    },
+    {
+      "id": "bi_lead",
+      "title": "BI Lead",
+      "family": "analytics",
+      "onet_code": "15-2051.00",
+      "seniority": "lead",
+      "vector": {
+        "sql": 88, "data_modeling": 75, "bi_reporting": 92, "data_viz": 88, "statistics": 65,
+        "experimentation": 55, "python": 55, "software_eng": 35, "git_cicd": 45, "cloud": 55,
+        "data_engineering": 50, "dbt_semantic": 65, "machine_learning": 30, "mlops": 20,
+        "genai_llm": 40, "rag": 25, "ai_agents": 20, "ai_evaluation": 30, "prompt_eng": 40,
+        "business_analysis": 85, "stakeholder_mgmt": 88, "problem_framing": 80, "product_mgmt": 60,
+        "domain_knowledge": 80
+      },
+      "demand": 74, "growth": 60, "remote_share": 60, "ai_resilience": 65, "salary_index": 75
+    },
+    {
+      "id": "analytics_manager",
+      "title": "Analytics Manager",
+      "family": "management",
+      "onet_code": "11-3021.00",
+      "seniority": "manager",
+      "vector": {
+        "sql": 70, "data_modeling": 60, "bi_reporting": 75, "data_viz": 70, "statistics": 65,
+        "experimentation": 60, "python": 45, "software_eng": 30, "git_cicd": 30, "cloud": 45,
+        "data_engineering": 40, "dbt_semantic": 45, "machine_learning": 35, "mlops": 20,
+        "genai_llm": 45, "rag": 25, "ai_agents": 25, "ai_evaluation": 40, "prompt_eng": 40,
+        "business_analysis": 88, "stakeholder_mgmt": 92, "problem_framing": 85, "product_mgmt": 70,
+        "domain_knowledge": 85
+      },
+      "demand": 72, "growth": 62, "remote_share": 55, "ai_resilience": 78, "salary_index": 82
+    },
+    {
+      "id": "ai_product_manager",
+      "title": "AI Data Product Manager",
+      "family": "product",
+      "onet_code": "11-2021.00",
+      "seniority": "senior",
+      "vector": {
+        "sql": 55, "data_modeling": 45, "bi_reporting": 60, "data_viz": 55, "statistics": 55,
+        "experimentation": 65, "python": 40, "software_eng": 35, "git_cicd": 30, "cloud": 45,
+        "data_engineering": 35, "dbt_semantic": 35, "machine_learning": 50, "mlops": 35,
+        "genai_llm": 70, "rag": 55, "ai_agents": 55, "ai_evaluation": 70, "prompt_eng": 60,
+        "business_analysis": 85, "stakeholder_mgmt": 90, "problem_framing": 88, "product_mgmt": 90,
+        "domain_knowledge": 80
+      },
+      "demand": 85, "growth": 90, "remote_share": 70, "ai_resilience": 90, "salary_index": 88
+    },
+    {
+      "id": "data_scientist",
+      "title": "Data Scientist",
+      "family": "science",
+      "onet_code": "15-2051.00",
+      "seniority": "senior",
+      "vector": {
+        "sql": 75, "data_modeling": 65, "bi_reporting": 55, "data_viz": 65, "statistics": 90,
+        "experimentation": 85, "python": 85, "software_eng": 55, "git_cicd": 60, "cloud": 60,
+        "data_engineering": 55, "dbt_semantic": 45, "machine_learning": 85, "mlops": 55,
+        "genai_llm": 65, "rag": 55, "ai_agents": 45, "ai_evaluation": 65, "prompt_eng": 55,
+        "business_analysis": 70, "stakeholder_mgmt": 65, "problem_framing": 80, "product_mgmt": 45,
+        "domain_knowledge": 65
+      },
+      "demand": 82, "growth": 78, "remote_share": 68, "ai_resilience": 80, "salary_index": 82
+    },
+    {
+      "id": "ml_engineer",
+      "title": "ML Engineer",
+      "family": "engineering",
+      "onet_code": "15-1252.00",
+      "seniority": "senior",
+      "vector": {
+        "sql": 65, "data_modeling": 65, "bi_reporting": 30, "data_viz": 40, "statistics": 80,
+        "experimentation": 60, "python": 90, "software_eng": 90, "git_cicd": 90, "cloud": 88,
+        "data_engineering": 80, "dbt_semantic": 50, "machine_learning": 92, "mlops": 88,
+        "genai_llm": 70, "rag": 65, "ai_agents": 60, "ai_evaluation": 70, "prompt_eng": 55,
+        "business_analysis": 45, "stakeholder_mgmt": 45, "problem_framing": 65, "product_mgmt": 35,
+        "domain_knowledge": 50
+      },
+      "demand": 92, "growth": 90, "remote_share": 72, "ai_resilience": 82, "salary_index": 92
+    },
+    {
+      "id": "ai_engineer",
+      "title": "AI Engineer (GenAI)",
+      "family": "engineering",
+      "onet_code": "15-1252.00",
+      "seniority": "senior",
+      "vector": {
+        "sql": 60, "data_modeling": 55, "bi_reporting": 30, "data_viz": 40, "statistics": 65,
+        "experimentation": 60, "python": 88, "software_eng": 85, "git_cicd": 85, "cloud": 82,
+        "data_engineering": 70, "dbt_semantic": 45, "machine_learning": 70, "mlops": 75,
+        "genai_llm": 92, "rag": 90, "ai_agents": 88, "ai_evaluation": 85, "prompt_eng": 88,
+        "business_analysis": 50, "stakeholder_mgmt": 50, "problem_framing": 70, "product_mgmt": 45,
+        "domain_knowledge": 55
+      },
+      "demand": 93, "growth": 95, "remote_share": 73, "ai_resilience": 90, "salary_index": 90
+    },
+    {
+      "id": "data_engineer",
+      "title": "Data Engineer",
+      "family": "engineering",
+      "onet_code": "15-1243.00",
+      "seniority": "senior",
+      "vector": {
+        "sql": 85, "data_modeling": 85, "bi_reporting": 40, "data_viz": 40, "statistics": 50,
+        "experimentation": 40, "python": 82, "software_eng": 80, "git_cicd": 85, "cloud": 85,
+        "data_engineering": 92, "dbt_semantic": 78, "machine_learning": 40, "mlops": 60,
+        "genai_llm": 45, "rag": 45, "ai_agents": 35, "ai_evaluation": 40, "prompt_eng": 40,
+        "business_analysis": 50, "stakeholder_mgmt": 50, "problem_framing": 60, "product_mgmt": 35,
+        "domain_knowledge": 55
+      },
+      "demand": 88, "growth": 80, "remote_share": 72, "ai_resilience": 75, "salary_index": 82
+    },
+    {
+      "id": "ai_solutions_architect",
+      "title": "AI Solutions Architect",
+      "family": "architecture",
+      "onet_code": "15-1299.08",
+      "seniority": "lead",
+      "vector": {
+        "sql": 65, "data_modeling": 70, "bi_reporting": 45, "data_viz": 45, "statistics": 60,
+        "experimentation": 55, "python": 75, "software_eng": 80, "git_cicd": 75, "cloud": 88,
+        "data_engineering": 75, "dbt_semantic": 60, "machine_learning": 65, "mlops": 75,
+        "genai_llm": 85, "rag": 82, "ai_agents": 80, "ai_evaluation": 80, "prompt_eng": 78,
+        "business_analysis": 75, "stakeholder_mgmt": 82, "problem_framing": 85, "product_mgmt": 65,
+        "domain_knowledge": 70
+      },
+      "demand": 86, "growth": 92, "remote_share": 70, "ai_resilience": 90, "salary_index": 90
+    },
+    {
+      "id": "ml_ops_engineer",
+      "title": "MLOps Engineer",
+      "family": "engineering",
+      "onet_code": "15-1252.00",
+      "seniority": "senior",
+      "vector": {
+        "sql": 55, "data_modeling": 55, "bi_reporting": 25, "data_viz": 30, "statistics": 55,
+        "experimentation": 45, "python": 85, "software_eng": 85, "git_cicd": 92, "cloud": 90,
+        "data_engineering": 75, "dbt_semantic": 45, "machine_learning": 70, "mlops": 92,
+        "genai_llm": 60, "rag": 55, "ai_agents": 50, "ai_evaluation": 70, "prompt_eng": 45,
+        "business_analysis": 40, "stakeholder_mgmt": 45, "problem_framing": 60, "product_mgmt": 30,
+        "domain_knowledge": 45
+      },
+      "demand": 85, "growth": 85, "remote_share": 74, "ai_resilience": 82, "salary_index": 86
+    }
+  ]
+}
