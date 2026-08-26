@@ -41,14 +41,36 @@ def load_skills() -> dict[str, Any]:
 
 @lru_cache(maxsize=1)
 def load_roles() -> dict[str, Any]:
-    """Role skill vectors + market signals."""
-    return _read_json("roles.json")
+    """
+    Role skill vectors + market signals.
+
+    Backfills production_exposure / judgment_exposure for any role missing them
+    so the whole dataset is consistent. Illustrative defaults are derived from
+    ai_resilience: a more AI-resilient role has less of its work automatable
+    (lower production exposure) and a larger protected judgment core.
+    """
+    data = _read_json("roles.json")
+    for role in data["roles"]:
+        resilience = role.get("ai_resilience", 50)
+        if "production_exposure" not in role:
+            # less resilient -> more of the production work is exposed to AI
+            role["production_exposure"] = max(0, min(100, 100 - resilience + 15))
+        if "judgment_exposure" not in role:
+            # the judgment core is small and shrinks as resilience rises
+            role["judgment_exposure"] = max(0, min(100, round((100 - resilience) * 0.4)))
+    return data
 
 
 @lru_cache(maxsize=1)
 def load_task_impact() -> dict[str, Any]:
     """AI task archetypes for the transformation table and JD analyzer."""
     return _read_json("ai_task_impact.json")
+
+
+@lru_cache(maxsize=1)
+def load_role_merges() -> dict[str, Any]:
+    """Curated Tech/Business/People merge map for the role-evolution feature."""
+    return _read_json("role_merges.json")
 
 
 def skill_ids() -> list[str]:

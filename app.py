@@ -20,6 +20,7 @@ from src import data_loader as dl
 from src.engine import analyze_profile
 from src.jd_analyzer import analyze_jd
 from src.analytics import log_event
+from src.role_evolution import analyze_role_evolution
 
 st.set_page_config(page_title="Data Career Navigator", page_icon="🧭", layout="wide")
 
@@ -65,6 +66,15 @@ with tab_nav:
         location = st.text_input("Location", "India")
         remote_pref = st.checkbox("Prefer remote work", value=True)
         top_n = st.slider("How many recommendations?", 3, 8, 5)
+        direction = st.radio(
+            "Which way do you want to grow?",
+            options=["tech", "business", "people"],
+            format_func=lambda a: {"tech": "Tech / deeper IC",
+                                   "business": "Business / product",
+                                   "people": "People / management"}[a],
+            horizontal=True,
+            help="Used to recommend a merged 'future role' on your preferred axis.",
+        )
 
     st.markdown("**Rate your skills (0-100).** Leave a skill at 0 if it is emerging / not yet developed.")
 
@@ -149,8 +159,10 @@ with tab_nav:
         ])
         st.dataframe(df_recs, use_container_width=True, hide_index=True)
 
-        # store recs so the deep-dive selectbox works across reruns
+        # store recs + profile so the deep-dive and role-evolution sections
+        # can render (and re-render on direction change) across reruns
         st.session_state["recs"] = recs
+        st.session_state["profile"] = profile
 
     # --- Deep dive per role (renders if we have recommendations) ---
     if st.session_state.get("recs"):
@@ -197,6 +209,46 @@ with tab_nav:
             st.json(r["future_fit_detail"]["explanation"])
             st.markdown("**Market signals**")
             st.json(r["market"])
+
+    # --- Role evolution & merges (renders once we have a profile) ---
+    if st.session_state.get("profile"):
+        st.subheader("6. How your role is evolving - and your merged future role")
+        st.caption(
+            "As AI absorbs the production layer of work, roles either de-level "
+            "(juniors + AI) or consolidate upward into merged, judgement-heavy roles. "
+            "Pick a direction above (Tech / Business / People) to see your recommended merge."
+        )
+        evo = analyze_role_evolution(st.session_state["profile"], chosen_axis=direction)
+        log_event("role_evolution_viewed",
+                  detail=f"match={evo['matched_role']}; axis={direction}")
+
+        ss = evo["seniority_shift"]
+        badge = {"de-leveling": "🔻", "consolidating": "🔺", "augmenting": "⚡"}.get(ss["pattern"], "")
+        st.markdown(f"**{badge} {ss['headline']}**")
+        e1, e2 = st.columns(2)
+        e1.metric("Production tasks AI can take", f"{ss['production_exposure']}%")
+        e2.metric("Judgement core (stays human)", f"{ss['judgment_exposure']}%")
+        st.caption(ss["detail"])
+
+        st.markdown("**Your three growth forks** (the one matching your chosen direction is recommended):")
+        forks = evo["merge"]["forks"]
+        fcols = st.columns(len(forks))
+        for col, fk in zip(fcols, forks):
+            with col:
+                head = f"{fk['axis_label']}"
+                if fk["recommended"]:
+                    st.success(f"**{head}** ⭐ recommended")
+                else:
+                    st.markdown(f"**{head}**")
+                st.markdown(f"→ **{fk['merged_title']}**")
+                st.caption(fk["rationale"])
+                st.write(f"Transition: {fk['transition_score']}/100 · ~{fk['estimated_time']}")
+                st.write("Build: " + ", ".join(fk["skill_gap_need"]))
+
+        st.caption(
+            "Merged roles are synthesized from the residual human skills of both roles plus "
+            "AI-orchestration skills (prompt, agents, evaluation). Illustrative seed data."
+        )
 
 
 # ===========================================================================
