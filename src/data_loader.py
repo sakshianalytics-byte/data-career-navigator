@@ -69,7 +69,7 @@ def load_task_impact() -> dict[str, Any]:
 
 @lru_cache(maxsize=1)
 def load_role_merges() -> dict[str, Any]:
-    """Curated Tech/Business/People merge map for the role-evolution feature."""
+    """Curated ic_tech / ic_nontech / people merge map for the role-merge feature."""
     return _read_json("role_merges.json")
 
 

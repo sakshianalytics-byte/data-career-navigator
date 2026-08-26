@@ -1,56 +1,71 @@
 {
-  "_note": "Curated SEED merge map. For a source role, each of three directions (tech = deeper individual-contributor/technical; business = product/strategy; people = management) names a partner role to merge with, the emergent merged role title, and a one-line rationale. The engine synthesizes the merged role's skill vector from the residual-human skills of both roles plus AI-orchestration 'glue' skills. Illustrative only; replace with data-driven adjacency later. 'partner' must be a role id from roles.json (used to pull the partner's skill vector). If a source role is absent here, the engine falls back to vector-based nearest roles.",
+  "_note": "Curated SEED merge map. For a source role, each growth DIRECTION (ic_tech = deeper hands-on/technical IC; ic_nontech = analyst/product/strategy IC; people = management) names a partner role to merge with, the emergent merged role title, and a one-line rationale. The engine synthesizes the merged role's skill vector from the residual-human skills of both roles plus AI-orchestration 'glue' skills. Illustrative only. 'partner' must be a role id in roles.json. If a source role is absent here, the engine falls back to a family-based partner per direction.",
   "directions": {
-    "tech":     { "label": "Tech / deeper IC", "meaning": "Grow as an individual contributor into hands-on-AI, technical depth." },
-    "business": { "label": "Business / product", "meaning": "Grow toward product, strategy, and owning business outcomes." },
-    "people":   { "label": "People / management", "meaning": "Grow into leading people, setting direction, and operating models." }
+    "ic_tech":    { "label": "Individual Contributor - Tech", "meaning": "Grow as a hands-on, technical individual contributor." },
+    "ic_nontech": { "label": "Individual Contributor - Non-Tech", "meaning": "Grow as an analyst/product/strategy individual contributor." },
+    "people":     { "label": "People Management", "meaning": "Grow into leading people, setting direction, and operating models." }
   },
   "glue_skills": ["genai_llm", "prompt_eng", "ai_agents", "ai_evaluation"],
   "merges": {
     "data_analyst": {
-      "tech":     { "partner": "analytics_engineer", "title": "AI Analytics Engineer", "rationale": "AI absorbs your reporting/SQL production, so you go deeper: own the semantic layer, pipelines, and AI-assisted analytics." },
-      "business": { "partner": "product_manager",    "title": "AI Product Analyst", "rationale": "With AI handling the build, you move up to framing problems and owning the product outcome." },
-      "people":   { "partner": "analytics_manager",  "title": "Analytics Lead (AI-Augmented)", "rationale": "Direct a team whose production work is AI-assisted; your value shifts to prioritization and mentoring." }
+      "ic_tech":    { "partner": "analytics_engineer", "title": "AI Analytics Engineer", "rationale": "AI absorbs your reporting/SQL production, so you go deeper: own the semantic layer, pipelines, and AI-assisted analytics." },
+      "ic_nontech": { "partner": "ai_analyst",          "title": "AI Analyst", "rationale": "Keep framing and interpreting, but let AI do the heavy analysis - you direct and validate it." },
+      "people":     { "partner": "analytics_manager",   "title": "Analytics Lead (AI-Augmented)", "rationale": "Direct a team whose production work is AI-assisted; your value shifts to prioritization and mentoring." }
     },
     "senior_data_analyst": {
-      "tech":     { "partner": "analytics_engineer", "title": "AI Analytics Engineer", "rationale": "Turn your analysis depth into engineered, AI-assisted data products." },
-      "business": { "partner": "ai_product_manager", "title": "AI Data Product Manager", "rationale": "Own the data product end-to-end now that AI does the heavy analysis lifting." },
-      "people":   { "partner": "analytics_manager",  "title": "Analytics Manager", "rationale": "Lead analysts and own the operating model as production work automates." }
+      "ic_tech":    { "partner": "analytics_engineer", "title": "AI Analytics Engineer", "rationale": "Turn your analysis depth into engineered, AI-assisted data products." },
+      "ic_nontech": { "partner": "ai_product_manager", "title": "AI Data Product Analyst", "rationale": "Own the data product's outcomes now that AI does the heavy analysis lifting." },
+      "people":     { "partner": "analytics_manager",  "title": "Analytics Manager", "rationale": "Lead analysts and own the operating model as production work automates." }
     },
     "business_analyst": {
-      "tech":     { "partner": "analytics_engineer", "title": "AI Analytics Engineer", "rationale": "AI takes the dashboards and SQL; you build the AI-assisted analytics stack instead." },
-      "business": { "partner": "program_manager",    "title": "AI Product/Program Analyst (PM+BA)", "rationale": "AI absorbs the production half of BA and the documentation/prototyping half of PM, so one person can frame, build-via-AI, decide, and deliver." },
-      "people":   { "partner": "analytics_manager",  "title": "Analytics Manager", "rationale": "Move from doing analysis to directing analysts and shaping decisions." }
+      "ic_tech":    { "partner": "analytics_engineer", "title": "AI Analytics Engineer", "rationale": "AI takes the dashboards and SQL; you build the AI-assisted analytics stack instead." },
+      "ic_nontech": { "partner": "product_manager",    "title": "AI Product Analyst (BA + PM)", "rationale": "AI absorbs the production half of BA and the documentation/prototyping half of PM, so one person can frame, build-via-AI, decide, and deliver." },
+      "people":     { "partner": "analytics_manager",  "title": "Analytics Manager", "rationale": "Move from doing analysis to directing analysts and shaping decisions." }
+    },
+    "risk_analyst": {
+      "ic_tech":    { "partner": "data_scientist",     "title": "AI Risk Modeler", "rationale": "AI speeds up reporting; you deepen into risk modeling and AI-assisted detection." },
+      "ic_nontech": { "partner": "compliance_analyst", "title": "Risk & Compliance Analyst", "rationale": "Combine risk analysis with regulatory judgement into one AI-augmented seat." },
+      "people":     { "partner": "analytics_manager",  "title": "Risk Analytics Manager", "rationale": "Lead a risk analytics team whose production work is AI-assisted." }
+    },
+    "compliance_analyst": {
+      "ic_tech":    { "partner": "ai_analyst",          "title": "AI Compliance Analyst", "rationale": "Use AI to monitor controls and evidence at scale; you own the judgement calls." },
+      "ic_nontech": { "partner": "risk_analyst",        "title": "Risk & Compliance Analyst", "rationale": "Merge compliance with risk analysis for a broader governance role." },
+      "people":     { "partner": "program_manager",     "title": "Compliance Program Lead", "rationale": "Own compliance programs and coordinate across teams." }
+    },
+    "financial_analyst": {
+      "ic_tech":    { "partner": "data_scientist",      "title": "Quantitative / FP&A Data Analyst", "rationale": "AI drafts models; you go deeper into quantitative and predictive finance." },
+      "ic_nontech": { "partner": "strategy_manager",    "title": "Finance & Strategy Analyst", "rationale": "Pair financial analysis with strategic planning as AI handles the number-crunching." },
+      "people":     { "partner": "analytics_manager",   "title": "Finance Analytics Manager", "rationale": "Lead an FP&A/finance analytics team." }
     },
     "program_manager": {
-      "tech":     { "partner": "business_analyst",   "title": "Technical Program Manager (data)", "rationale": "Add hands-on data/AI skills so you can build and validate prototypes yourself, not just coordinate." },
-      "business": { "partner": "product_manager",    "title": "AI Product Manager", "rationale": "Shift from delivery coordination to owning product strategy and outcomes." },
-      "people":   { "partner": "strategy_manager",   "title": "Head of Programs / Strategy", "rationale": "Consolidate the judgment-heavy work into a senior leadership seat." }
+      "ic_tech":    { "partner": "business_analyst",   "title": "Technical Program Manager (data)", "rationale": "Add hands-on data/AI skills so you can build and validate prototypes yourself." },
+      "ic_nontech": { "partner": "product_manager",    "title": "AI Product Manager", "rationale": "Shift from delivery coordination to owning product strategy and outcomes." },
+      "people":     { "partner": "strategy_manager",   "title": "Head of Programs / Strategy", "rationale": "Consolidate the judgement-heavy work into a senior leadership seat." }
     },
     "product_manager": {
-      "tech":     { "partner": "software_developer", "title": "Technical Product Manager", "rationale": "Add AI-orchestration and engineering fluency to spec and prototype with AI directly." },
-      "business": { "partner": "strategy_manager",   "title": "Group Product Manager / Strategy", "rationale": "Own a broader product portfolio and the strategic bets." },
-      "people":   { "partner": "analytics_manager",  "title": "Director of Product", "rationale": "Lead PMs and set product direction across teams." }
+      "ic_tech":    { "partner": "software_developer", "title": "Technical Product Manager", "rationale": "Add AI-orchestration and engineering fluency to spec and prototype with AI directly." },
+      "ic_nontech": { "partner": "strategy_manager",   "title": "Group Product Manager / Strategy", "rationale": "Own a broader product portfolio and the strategic bets." },
+      "people":     { "partner": "analytics_manager",  "title": "Director of Product", "rationale": "Lead PMs and set product direction across teams." }
     },
     "data_engineer": {
-      "tech":     { "partner": "ai_data_engineer",   "title": "AI Data Engineer", "rationale": "AI writes pipeline boilerplate; you specialize in AI-data systems, RAG stores, and reliability." },
-      "business": { "partner": "ai_solutions_architect", "title": "AI Solutions Architect", "rationale": "Move up-stack to design AI-data solutions and make the architecture/cost tradeoffs." },
-      "people":   { "partner": "analytics_manager",  "title": "Data Engineering Manager", "rationale": "Lead an engineering team whose implementation is increasingly AI-assisted." }
+      "ic_tech":    { "partner": "ai_data_engineer",   "title": "AI Data Engineer", "rationale": "AI writes pipeline boilerplate; you specialize in AI-data systems, RAG stores, and reliability." },
+      "ic_nontech": { "partner": "ai_solutions_architect", "title": "AI Solutions Architect", "rationale": "Move up-stack to design AI-data solutions and make architecture/cost tradeoffs." },
+      "people":     { "partner": "analytics_manager",  "title": "Data Engineering Manager", "rationale": "Lead an engineering team whose implementation is increasingly AI-assisted." }
     },
     "software_developer": {
-      "tech":     { "partner": "ai_engineer",        "title": "AI Engineer (GenAI)", "rationale": "AI generates boilerplate; you specialize in building LLM/agentic systems and evaluation." },
-      "business": { "partner": "product_manager",    "title": "Technical Product Manager", "rationale": "Move from implementation to owning what gets built and why." },
-      "people":   { "partner": "analytics_manager",  "title": "Engineering Manager", "rationale": "Lead developers whose coding is AI-accelerated; own design and delivery quality." }
-    },
-    "analytics_manager": {
-      "tech":     { "partner": "ai_analytics_lead",  "title": "Head of AI Analytics", "rationale": "Pair leadership with deep AI-analytics fluency to steer the technical direction." },
-      "business": { "partner": "strategy_manager",   "title": "Director of Analytics & Strategy", "rationale": "Connect analytics leadership to company strategy and the big decisions." },
-      "people":   { "partner": "strategy_manager",   "title": "Senior Analytics Leader", "rationale": "Broaden your people leadership across multiple analytics functions." }
+      "ic_tech":    { "partner": "ai_engineer",        "title": "AI Engineer (GenAI)", "rationale": "AI generates boilerplate; you specialize in building LLM/agentic systems and evaluation." },
+      "ic_nontech": { "partner": "product_manager",    "title": "Technical Product Manager", "rationale": "Move from implementation to owning what gets built and why." },
+      "people":     { "partner": "analytics_manager",  "title": "Engineering Manager", "rationale": "Lead developers whose coding is AI-accelerated; own design and delivery quality." }
     },
     "data_scientist": {
-      "tech":     { "partner": "ml_engineer",        "title": "ML Engineer / Applied Scientist", "rationale": "AI accelerates modeling; you go deeper into productionizing and evaluating ML/LLM systems." },
-      "business": { "partner": "ai_product_manager", "title": "AI Product Manager (technical)", "rationale": "Turn modeling insight into owned AI products and roadmap." },
-      "people":   { "partner": "analytics_manager",  "title": "Data Science Manager", "rationale": "Lead a DS team and own the research-to-impact operating model." }
+      "ic_tech":    { "partner": "ml_engineer",        "title": "ML Engineer / Applied Scientist", "rationale": "AI accelerates modeling; you go deeper into productionizing and evaluating ML/LLM systems." },
+      "ic_nontech": { "partner": "ai_product_manager", "title": "AI Product Manager (technical)", "rationale": "Turn modeling insight into owned AI products and roadmap." },
+      "people":     { "partner": "analytics_manager",  "title": "Data Science Manager", "rationale": "Lead a DS team and own the research-to-impact operating model." }
+    },
+    "analytics_manager": {
+      "ic_tech":    { "partner": "ai_analytics_lead",  "title": "Head of AI Analytics", "rationale": "Pair leadership with deep AI-analytics fluency to steer the technical direction." },
+      "ic_nontech": { "partner": "strategy_manager",   "title": "Director of Analytics & Strategy", "rationale": "Connect analytics leadership to company strategy and the big decisions." },
+      "people":     { "partner": "strategy_manager",   "title": "Senior Analytics Leader", "rationale": "Broaden your people leadership across multiple analytics functions." }
     }
   }
 }

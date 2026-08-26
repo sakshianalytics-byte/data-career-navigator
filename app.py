@@ -20,6 +20,7 @@ from src import data_loader as dl
 from src.engine import analyze_profile, recommend_transitions
 from src.jd_analyzer import analyze_jd
 from src.analytics import log_event
+from src.role_evolution import analyze_role_evolution
 
 st.set_page_config(
     page_title="Data Career Navigator",
@@ -251,8 +252,8 @@ with tab_nav:
         st.session_state["result"] = result
         st.session_state.pop("recs", None)
 
-    # --- Render results from stored state ---
-    if st.session_state.get("result"):
+    # --- Render results from stored state (need BOTH result and profile) ---
+    if st.session_state.get("result") and st.session_state.get("profile"):
         result = st.session_state["result"]
 
         # --- Current profile ---
@@ -314,9 +315,11 @@ with tab_nav:
             get_recs = st.button("Get recommendations", type="primary",
                                  key="get_recs", use_container_width=True)
 
+        stored_profile = st.session_state["profile"]  # guaranteed by the block guard
+
         if get_recs or "recs" not in st.session_state:
             recs = recommend_transitions(
-                st.session_state["profile"], top_n=TOP_N, direction=direction)
+                stored_profile, top_n=TOP_N, direction=direction)
             st.session_state["recs"] = recs
             if get_recs:
                 log_event("recommendations_direction",
@@ -343,6 +346,44 @@ with tab_nav:
                     "Skill shortfall", help=DEFN["skill_shortfall"]),
             },
         )
+
+        # --- Merged future role (role evolution) ---
+        evo = analyze_role_evolution(stored_profile, direction)
+        ss = evo["seniority_shift"]
+        mg = evo["merged"]
+        section("Your merged future role",
+                "As AI absorbs routine work, roles merge into higher-value hybrids. "
+                "Here's where yours can go on your chosen track.")
+
+        pat_color = {"de-leveling": "#dc2626", "consolidating": "#059669", "augmenting": "#d97706"}
+        st.markdown(
+            f'<div class="card" style="border-left:5px solid {pat_color.get(ss["pattern"], "#4f46e5")};">'
+            f'<h4 style="color:#1e2233;text-transform:none;letter-spacing:0;font-size:14px;">{ss["headline"]}</h4>'
+            f'<p class="muted" style="margin:4px 0 0;">Production tasks AI can take: '
+            f'<b>{ss["production_exposure"]}%</b> · Judgement core (stays human): '
+            f'<b>{ss["judgment_exposure"]}%</b></p>'
+            f'<p style="font-size:13.5px;color:#374151;margin:8px 0 0;">{ss["detail"]}</p>'
+            "</div>",
+            unsafe_allow_html=True,
+        )
+
+        if mg:
+            learn = "".join(f"<li>{s}</li>" for s in mg["skills_to_learn"]) or "<li>You're well covered.</li>"
+            st.markdown(
+                '<div class="card" style="margin-top:12px;background:linear-gradient(135deg,#f5f3ff,#eef2ff);">'
+                f'<h4>Going the {mg["direction_label"]} track</h4>'
+                f'<p style="font-size:15px;font-weight:700;color:#1e2233;margin:2px 0 6px;">'
+                f'{mg["from_role"]} &nbsp;→&nbsp; merges with {mg["partner_role"]} &nbsp;→&nbsp; '
+                f'<span style="color:#6d28d9;">{mg["merged_title"]}</span></p>'
+                f'<p style="font-size:13.5px;color:#374151;margin:0 0 10px;">{mg["rationale"]}</p>'
+                f'<p class="muted" style="margin:0 0 4px;">Transition score '
+                f'<b>{mg["transition_score"]}/100</b> · Est. time <b>{mg["estimated_time"]}</b></p>'
+                f'<p style="font-size:13px;font-weight:600;color:#4f46e5;margin:10px 0 2px;">'
+                'What to learn to get there</p>'
+                f'<ul style="margin:0;padding-left:18px;font-size:13.5px;color:#374151;">{learn}</ul>'
+                "</div>",
+                unsafe_allow_html=True,
+            )
 
         # --- Deep dive ---
         section("Deep dive", "Explore any recommended role in detail.")
