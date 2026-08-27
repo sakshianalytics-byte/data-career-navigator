@@ -148,8 +148,7 @@ DEFN = {
     "remote_fit": "Share of jobs in this role offered remote. Higher = easier to find remote work. (0-100)",
     "skill_shortfall": "Roughly how many skill points you still need to close to meet this "
                        "role's requirements. Lower = you're closer.",
-    "transformation": "How much of your CURRENT role's day-to-day work is being reshaped by AI. "
-                      "It measures task change, not risk of losing your job. (0-100)",
+    "transformation": "How much of your role's day-to-day work is being reshaped by AI. (0-100)",
     "exposure": "For a single task, the share of it AI can already do. Higher = AI handles more. (0-100)",
     "ai_impact": "How AI affects a task: Automated (AI does most), AI-assisted (AI drafts, you review), "
                  "AI-augmented (AI speeds you up, you stay in control), or Stays human (needs your judgement).",
@@ -211,7 +210,7 @@ with tab_nav:
                                     "python", "software_eng", "git_cicd", "cloud",
                                     "data_engineering", "dbt_semantic"]),
         ("AI & Machine Learning", ["machine_learning", "mlops", "genai_llm", "rag",
-                                   "ai_agents", "ai_evaluation", "prompt_eng"]),
+                                   "ai_agents", "prompt_eng"]),
         ("Analytics & Finance", ["statistics", "experimentation", "financial_analysis"]),
         ("Business & Product", ["business_analysis", "problem_framing", "product_mgmt",
                                 "strategy", "domain_knowledge", "documentation"]),
@@ -286,8 +285,7 @@ with tab_nav:
             )
 
         # --- AI transformation ---
-        section("How AI is transforming your current role",
-                "Task transformation, not risk of losing your job.")
+        section("How AI is transforming your current role")
         ai = result["ai_transformation"]
         mcol, _ = st.columns([1, 2])
         mcol.metric("Task transformation score", f"{ai['score']}/100", help=DEFN["transformation"])
@@ -304,8 +302,7 @@ with tab_nav:
         )
 
         # --- Recommendations ---
-        section("Your top recommended next roles",
-                "Pick the direction you want to grow, then get tailored suggestions.")
+        section("Your top recommended next roles")
         dcol, bcol = st.columns([3, 1])
         with dcol:
             direction = st.radio(
@@ -337,7 +334,7 @@ with tab_nav:
 
         df_recs = pd.DataFrame([
             {"Role": r["title"], "Transition": r["transition_score"],
-             "Future Fit": r["future_fit"], "Remote Fit": r["remote_fit"],
+             "Future Fit": r["future_fit"],
              "Skill shortfall": r["transition_detail"]["skill_shortfall"],
              "Est. time": r["estimated_time"]}
             for r in recs
@@ -349,8 +346,6 @@ with tab_nav:
                     "Transition", help=DEFN["transition"], min_value=0, max_value=100, format="%d"),
                 "Future Fit": st.column_config.ProgressColumn(
                     "Future Fit", help=DEFN["future_fit"], min_value=0, max_value=100, format="%d"),
-                "Remote Fit": st.column_config.ProgressColumn(
-                    "Remote Fit", help=DEFN["remote_fit"], min_value=0, max_value=100, format="%d"),
                 "Skill shortfall": st.column_config.NumberColumn(
                     "Skill shortfall", help=DEFN["skill_shortfall"]),
             },
@@ -360,39 +355,30 @@ with tab_nav:
         evo = analyze_role_evolution(stored_profile, direction)
         ss = evo["seniority_shift"]
         mg = evo["merged"]
-        section("Your merged future role",
-                "As AI absorbs routine work, roles merge into higher-value hybrids. "
-                "Here's where yours can go on your chosen track.")
+        section("Your merged future role")
 
-        pat_color = {"de-leveling": "#dc2626", "consolidating": "#059669", "augmenting": "#d97706"}
+        # Seniority-shift as regular text (no box)
+        st.markdown(f"**{ss['headline']}**")
         st.markdown(
-            f'<div class="card" style="border-left:5px solid {pat_color.get(ss["pattern"], "#4f46e5")};">'
-            f'<h4 style="color:#1e2233;text-transform:none;letter-spacing:0;font-size:14px;">{ss["headline"]}</h4>'
-            f'<p class="muted" style="margin:4px 0 0;">Production tasks AI can take: '
-            f'<b>{ss["production_exposure"]}%</b> · Judgement core (stays human): '
-            f'<b>{ss["judgment_exposure"]}%</b></p>'
-            f'<p style="font-size:13.5px;color:#374151;margin:8px 0 0;">{ss["detail"]}</p>'
-            "</div>",
-            unsafe_allow_html=True,
+            f"Production tasks AI can take: **{ss['production_exposure']}%** · "
+            f"Judgement core (stays human): **{ss['judgment_exposure']}%**"
         )
+        st.markdown(ss["detail"])
 
         if mg:
-            learn = "".join(f"<li>{s}</li>" for s in mg["skills_to_learn"]) or "<li>You're well covered.</li>"
+            st.markdown(f"**Going the {mg['direction_label']} track**")
             st.markdown(
-                '<div class="card" style="margin-top:12px;background:linear-gradient(135deg,#f5f3ff,#eef2ff);">'
-                f'<h4>Going the {mg["direction_label"]} track</h4>'
-                f'<p style="font-size:15px;font-weight:700;color:#1e2233;margin:2px 0 6px;">'
-                f'{mg["from_role"]} &nbsp;→&nbsp; merges with {mg["partner_role"]} &nbsp;→&nbsp; '
-                f'<span style="color:#6d28d9;">{mg["merged_title"]}</span></p>'
-                f'<p style="font-size:13.5px;color:#374151;margin:0 0 10px;">{mg["rationale"]}</p>'
-                f'<p class="muted" style="margin:0 0 4px;">Transition score '
-                f'<b>{mg["transition_score"]}/100</b> · Est. time <b>{mg["estimated_time"]}</b></p>'
-                f'<p style="font-size:13px;font-weight:600;color:#4f46e5;margin:10px 0 2px;">'
-                'What to learn to get there</p>'
-                f'<ul style="margin:0;padding-left:18px;font-size:13.5px;color:#374151;">{learn}</ul>'
-                "</div>",
-                unsafe_allow_html=True,
+                f"{mg['from_role']} → merges with {mg['partner_role']} → "
+                f"**{mg['merged_title']}**"
             )
+            st.markdown(mg["rationale"])
+            st.markdown(
+                f"Transition score **{mg['transition_score']}/100** · "
+                f"Est. time **{mg['estimated_time']}**"
+            )
+            st.markdown("**What to learn to get there**")
+            for s in (mg["skills_to_learn"] or ["You're well covered."]):
+                st.markdown(f"- {s}")
 
         # --- Deep dive ---
         section("Deep dive", "Explore any recommended role in detail.")
