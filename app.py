@@ -47,7 +47,7 @@ st.markdown(
       .topbar {
         background: linear-gradient(135deg, #0b0b0f 0%, #1c1c22 55%, #2b2b33 100%);
         border-radius: 14px; padding: 12px 22px; color: #fff;
-        margin: 6px 0 16px; overflow: hidden;
+        margin: 22px 0 16px; overflow: hidden;
         box-shadow: 0 6px 18px rgba(0,0,0,.28);
         display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
         font-family: "Times New Roman", Times, serif;
