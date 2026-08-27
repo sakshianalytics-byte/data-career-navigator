@@ -236,6 +236,84 @@ _MERGE_SYSTEM = (
 )
 
 
+# Short, role-specific "how this role thinks" descriptions. Used to ground the
+# mindset note (and as the deterministic fallback when Gemini is unavailable).
+THINKING_STYLES = {
+    "Data Analyst": "digs deep into specific datasets to answer precise business questions",
+    "Senior Data Analyst": "digs deep into data and frames the questions worth answering",
+    "Business Analyst": "thinks in detail about a process and the data behind it to pin down requirements",
+    "BI Lead": "thinks about consistent metrics, reporting standards, and what leaders need to see",
+    "AI Analyst": "blends detailed analysis with judging what AI outputs can be trusted",
+    "Analytics Engineer": "thinks in systems - clean models, pipelines, and reusable data",
+    "Data Engineer": "thinks about reliability, scale, and how data flows through systems",
+    "AI Data Engineer": "thinks about building dependable data + AI systems at scale",
+    "Software Developer": "thinks in terms of design, edge cases, and building robust systems",
+    "MLOps Engineer": "thinks about deploying, monitoring, and keeping models reliable in production",
+    "Data Scientist": "thinks in hypotheses, experiments, and statistical rigour to model uncertainty",
+    "ML Engineer": "thinks about turning models into performant, production-grade systems",
+    "AI Engineer (GenAI)": "thinks about designing and evaluating LLM/agentic systems",
+    "AI Solutions Architect": "thinks about end-to-end architecture, trade-offs, and how pieces fit",
+    "Analytics Manager": "thinks about priorities, people, and turning analysis into decisions",
+    "AI-Augmented Analytics Lead": "thinks about steering an AI-assisted analytics team and its direction",
+    "Program Manager": "thinks broadly about coordination, timelines, risks, and cross-team buy-in",
+    "Product Manager": "thinks across the whole product - users, features, and business outcomes",
+    "AI Data Product Manager": "thinks about the AI product's value, roadmap, and adoption",
+    "Strategy Manager": "thinks about the big picture, options, and long-term bets under uncertainty",
+    "Quantitative Risk Analyst": "thinks in models, probabilities, and downside scenarios",
+    "Risk & Compliance Analyst (Ops/QA)": "thinks about controls, accuracy, and adherence to policy",
+    "Financial Analyst": "thinks in numbers, forecasts, and the financial impact of choices",
+}
+
+
+def thinking_style(role_title: str) -> str:
+    return THINKING_STYLES.get(role_title, "approaches problems in its own distinct way")
+
+
+_MINDSET_SYSTEM = (
+    "You write a short, specific 'note on mindset' for a career tool. Given two roles and a "
+    "one-line description of how each ROLE tends to think, write 2-3 sentences (about 55 words) "
+    "explaining that merging their SKILLS is easy but merging their WAYS OF THINKING is the real "
+    "challenge. Contrast the two thinking styles concretely and specifically for THESE two roles "
+    "(do not use generic wording), then say excelling in the merged role means deliberately "
+    "building a new blended mindset. Warm, plain, no headings or bullets."
+)
+
+
+def mindset_note(role_a: str, role_b: str) -> str:
+    """
+    Role-specific mindset note. Uses Gemini when available for a tailored note;
+    otherwise falls back to a deterministic sentence built from THINKING_STYLES.
+    """
+    style_a = thinking_style(role_a)
+    style_b = thinking_style(role_b)
+    fallback = (
+        f"This tool can merge skills, but not ways of thinking. A {role_a} {style_a}, "
+        f"while a {role_b} {style_b}. The merged role is not just the sum of both skill "
+        "sets - excelling in it means deliberately building a new mindset that blends "
+        "both ways of thinking, and how far you succeed depends on how well you develop it."
+    )
+    if not gemini_available():
+        return fallback
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=_api_key())
+        facts = {"role_a": role_a, "role_a_thinks": style_a,
+                 "role_b": role_b, "role_b_thinks": style_b}
+        model_name = st.session_state.get("_gemini_model") if st is not None else None
+        if not model_name:
+            model_name = _pick_model(genai)
+            if st is not None:
+                st.session_state["_gemini_model"] = model_name
+        model = genai.GenerativeModel(
+            model_name,
+            system_instruction=_MINDSET_SYSTEM + "\n\nFACTS (JSON):\n" + json.dumps(facts),
+        )
+        resp = model.generate_content("Write the note.")
+        return (resp.text or "").strip() or fallback
+    except Exception:
+        return fallback
+
+
 def merged_role_paragraph(merged_title: str, role_a: str, role_b: str,
                           ai_exposure: int, inherited_skills: list[str],
                           add_skills: list[str]) -> str:

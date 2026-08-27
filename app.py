@@ -46,7 +46,8 @@ st.markdown(
       /* lean top bar (gradient black, white text, Times New Roman) */
       .topbar {
         background: linear-gradient(135deg, #0b0b0f 0%, #1c1c22 55%, #2b2b33 100%);
-        border-radius: 12px; padding: 12px 22px; color: #fff; margin-bottom: 16px;
+        border-radius: 14px; padding: 12px 22px; color: #fff;
+        margin: 6px 0 16px; overflow: hidden;
         box-shadow: 0 6px 18px rgba(0,0,0,.28);
         display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
         font-family: "Times New Roman", Times, serif;
@@ -570,9 +571,15 @@ with tab_merge:
             glue = set(m.get("glue_skills", []))
             inherited = [s["label"] for s in m["required_skills"] if s["label"] not in glue]
             to_add = [s["label"] for s in m["required_skills"] if s["label"] in glue] or list(glue)
-            para = chatmod.merged_role_paragraph(
-                m["title"], res["role_a"]["title"], res["role_b"]["title"],
-                m["ai_exposure"], inherited, to_add)
+            if chatmod.gemini_available():
+                st.caption("✨ Generating an AI summary - this can take about 5 seconds, "
+                           "please wait for it to load.")
+                with st.spinner("Generating AI summary..."):
+                    para = chatmod.merged_role_paragraph(
+                        m["title"], res["role_a"]["title"], res["role_b"]["title"],
+                        m["ai_exposure"], inherited, to_add)
+            else:
+                para = ""
             if para:
                 st.markdown(para)
 
@@ -596,20 +603,15 @@ with tab_merge:
                 "</div>",
                 unsafe_allow_html=True,
             )
-            # Mindset disclaimer - skills can be merged, ways of thinking cannot
+            # Mindset note - role-specific (Gemini when available, else deterministic)
+            with st.spinner("Preparing the mindset note..."):
+                note = chatmod.mindset_note(res["role_a"]["title"], res["role_b"]["title"])
             st.markdown(
                 '<div style="border-left:4px solid #d97706;background:#fff8ef;'
                 'padding:12px 16px;border-radius:0 10px 10px 0;margin-top:12px;font-size:13.5px;'
                 'color:#374151;">'
-                '<b style="color:#b45309;">A note on mindset:</b> this tool can merge '
-                f'<i>skills</i>, but not <i>ways of thinking</i>. {res["role_a"]["title"]} and '
-                f'{res["role_b"]["title"]} approach problems differently - one tends to think in a '
-                'deep, detail-oriented way about the data or product, while the other thinks more '
-                'broadly across the product, its users, required features, and cross-team buy-in. '
-                'The merged role is not just the sum of both skill sets; excelling in it means '
-                'deliberately building a <b>new mindset</b> that blends both perspectives. How far '
-                'you succeed depends on how well you develop that combined way of thinking.'
-                '</div>',
+                '<b style="color:#b45309;">A note on mindset:</b> '
+                f'{note}</div>',
                 unsafe_allow_html=True,
             )
 
