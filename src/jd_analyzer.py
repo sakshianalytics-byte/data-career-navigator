@@ -58,7 +58,6 @@ _SKILL_TO_TASKS: dict[str, list[str]] = {
     "genai_llm": ["ai_evaluation_task", "coding_implementation"],
     "rag": ["ai_evaluation_task"],
     "ai_agents": ["ai_evaluation_task"],
-    "ai_evaluation": ["ai_evaluation_task"],
     "prompt_eng": ["ai_evaluation_task"],
     "business_analysis": ["business_interpretation", "problem_framing"],
     "stakeholder_mgmt": ["stakeholder_management"],

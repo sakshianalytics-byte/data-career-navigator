@@ -5,7 +5,7 @@
     "ic_nontech": { "label": "Individual Contributor - Non-Tech", "meaning": "Grow as an analyst/product/strategy individual contributor." },
     "people":     { "label": "People Management", "meaning": "Grow into leading people, setting direction, and operating models." }
   },
-  "glue_skills": ["genai_llm", "prompt_eng", "ai_agents", "ai_evaluation"],
+  "glue_skills": ["genai_llm", "prompt_eng", "ai_agents"],
   "merges": {
     "data_analyst": {
       "ic_tech":    { "partner": "analytics_engineer", "title": "AI Analytics Engineer", "rationale": "AI absorbs your reporting/SQL production, so you go deeper: own the semantic layer, pipelines, and AI-assisted analytics." },

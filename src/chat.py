@@ -180,7 +180,7 @@ _SYSTEM = (
     "2. If the user asks something the facts don't cover, say you can only speak to their "
     "computed results and suggest what they could adjust in the tool.\n"
     "3. When you cite a number, use the exact value from the facts.\n"
-    "4. Frame everything as career EVOLUTION, not job loss.\n"
+    "4. Frame everything as career evolution and opportunity.\n"
     "5. Keep answers under ~180 words unless asked for more. Use plain language.\n"
 )
 

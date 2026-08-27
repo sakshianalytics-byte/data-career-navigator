@@ -132,17 +132,28 @@ def role_transformation_score(profile: dict[str, Any]) -> dict[str, Any]:
         score = round(weighted / total_w) if total_w else 0
     else:
         score = 0
+
+    # Framing scales with the score so the words match the number.
+    if score >= 65:
+        framing = ("Your role is being heavily reshaped by AI - most day-to-day tasks are "
+                   "already AI-assisted or automated.")
+    elif score >= 45:
+        framing = ("Your role is undergoing significant task transformation - a large share "
+                   "of the work is being reshaped by AI.")
+    elif score >= 30:
+        framing = ("Your role is being moderately reshaped by AI - some tasks are changing "
+                   "while the core stays human.")
+    else:
+        framing = ("Your role is only lightly touched by AI so far - most of the work still "
+                   "depends on human judgement.")
+
     return {
         "score": score,
         "matched_role": matched["role"]["title"],
         "matched_role_id": matched["role"]["id"],
         "similarity": round(matched["similarity"], 3),
         "tasks": task_rows,
-        "framing": (
-            "Your role is undergoing significant task transformation. "
-            "This measures how much of the work is being reshaped by AI, "
-            "not the risk of your job disappearing."
-        ),
+        "framing": framing,
     }
 
 
@@ -324,7 +335,6 @@ def _skill_learning_action(sid: str) -> str:
         "genai_llm": "LLM fundamentals and the major model APIs",
         "rag": "Retrieval-augmented generation + vector search",
         "ai_agents": "Agentic patterns (tools, planning, orchestration)",
-        "ai_evaluation": "AI evaluation: metrics, guardrails, red-teaming",
         "prompt_eng": "Structured prompting and prompt evaluation",
         "machine_learning": "Core ML modelling and validation",
         "mlops": "Model deployment, monitoring, and MLOps",

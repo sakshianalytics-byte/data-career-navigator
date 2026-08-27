@@ -1,39 +1,169 @@
 {
   "_note": "Canonical skill dimensions used to build role vectors. Values in roles.json are 0-100 proficiency expectations for that role. Categories help group skills and identify transferable vs technical skills.",
   "skills": [
-    { "id": "sql",                "label": "SQL",                      "category": "data" },
-    { "id": "data_modeling",      "label": "Data Modeling",            "category": "data" },
-    { "id": "bi_reporting",       "label": "BI & Reporting",           "category": "data" },
-    { "id": "data_viz",           "label": "Data Visualization",       "category": "data" },
-    { "id": "statistics",         "label": "Statistics",               "category": "analytics" },
-    { "id": "experimentation",    "label": "Experimentation / A-B",    "category": "analytics" },
-    { "id": "python",             "label": "Python",                   "category": "engineering" },
-    { "id": "software_eng",       "label": "Software Engineering",     "category": "engineering" },
-    { "id": "git_cicd",           "label": "Git / CI-CD",              "category": "engineering" },
-    { "id": "cloud",              "label": "Cloud Platforms",          "category": "engineering" },
-    { "id": "data_engineering",   "label": "Data Engineering / ETL",   "category": "engineering" },
-    { "id": "dbt_semantic",       "label": "dbt / Semantic Layer",     "category": "engineering" },
-    { "id": "machine_learning",   "label": "Machine Learning",         "category": "ai" },
-    { "id": "mlops",              "label": "MLOps",                    "category": "ai" },
-    { "id": "genai_llm",          "label": "GenAI / LLMs",             "category": "ai" },
-    { "id": "rag",                "label": "RAG / Vector Search",      "category": "ai" },
-    { "id": "ai_agents",          "label": "AI Agents",                "category": "ai" },
-    { "id": "ai_evaluation",      "label": "AI Evaluation",            "category": "ai" },
-    { "id": "prompt_eng",         "label": "Prompt Engineering",       "category": "ai" },
-    { "id": "business_analysis",  "label": "Business Analysis",        "category": "business" },
-    { "id": "stakeholder_mgmt",   "label": "Stakeholder Management",   "category": "business" },
-    { "id": "problem_framing",    "label": "Problem Framing",          "category": "business" },
-    { "id": "product_mgmt",       "label": "Product Management",       "category": "business" },
-    { "id": "domain_knowledge",   "label": "Domain / Industry Knowledge", "category": "business" },
-    { "id": "people_mgmt",        "label": "People Management",        "category": "business" },
-    { "id": "operations",         "label": "Operations & Process Design", "category": "business" },
-    { "id": "strategy",           "label": "Strategy & Business Planning", "category": "business" },
-    { "id": "documentation",      "label": "Documentation & Technical Writing", "category": "business" },
-    { "id": "data_governance",    "label": "Data Governance",          "category": "business" },
-    { "id": "risk_analysis",      "label": "Risk Analysis",            "category": "business" },
-    { "id": "regulatory_compliance", "label": "Regulatory Compliance", "category": "business" },
-    { "id": "financial_analysis", "label": "Financial Analysis",       "category": "analytics" }
+    {
+      "id": "sql",
+      "label": "SQL",
+      "category": "data"
+    },
+    {
+      "id": "data_modeling",
+      "label": "Data Modeling",
+      "category": "data"
+    },
+    {
+      "id": "bi_reporting",
+      "label": "BI & Reporting",
+      "category": "data"
+    },
+    {
+      "id": "data_viz",
+      "label": "Data Visualization",
+      "category": "data"
+    },
+    {
+      "id": "statistics",
+      "label": "Statistics",
+      "category": "analytics"
+    },
+    {
+      "id": "experimentation",
+      "label": "Experimentation / A-B",
+      "category": "analytics"
+    },
+    {
+      "id": "python",
+      "label": "Python",
+      "category": "engineering"
+    },
+    {
+      "id": "software_eng",
+      "label": "Software Engineering",
+      "category": "engineering"
+    },
+    {
+      "id": "git_cicd",
+      "label": "Git / CI-CD",
+      "category": "engineering"
+    },
+    {
+      "id": "cloud",
+      "label": "Cloud Platforms",
+      "category": "engineering"
+    },
+    {
+      "id": "data_engineering",
+      "label": "Data Engineering / ETL",
+      "category": "engineering"
+    },
+    {
+      "id": "dbt_semantic",
+      "label": "dbt / Semantic Layer",
+      "category": "engineering"
+    },
+    {
+      "id": "machine_learning",
+      "label": "Machine Learning",
+      "category": "ai"
+    },
+    {
+      "id": "mlops",
+      "label": "MLOps",
+      "category": "ai"
+    },
+    {
+      "id": "genai_llm",
+      "label": "GenAI / LLMs",
+      "category": "ai"
+    },
+    {
+      "id": "rag",
+      "label": "RAG / Vector Search",
+      "category": "ai"
+    },
+    {
+      "id": "ai_agents",
+      "label": "AI Agents",
+      "category": "ai"
+    },
+    {
+      "id": "prompt_eng",
+      "label": "Prompt Engineering",
+      "category": "ai"
+    },
+    {
+      "id": "business_analysis",
+      "label": "EDA / Root Cause Analysis",
+      "category": "business"
+    },
+    {
+      "id": "stakeholder_mgmt",
+      "label": "Stakeholder Management",
+      "category": "business"
+    },
+    {
+      "id": "problem_framing",
+      "label": "Problem Framing",
+      "category": "business"
+    },
+    {
+      "id": "product_mgmt",
+      "label": "Product Management",
+      "category": "business"
+    },
+    {
+      "id": "domain_knowledge",
+      "label": "Domain / Industry Knowledge",
+      "category": "business"
+    },
+    {
+      "id": "people_mgmt",
+      "label": "People Management",
+      "category": "business"
+    },
+    {
+      "id": "operations",
+      "label": "Operations & Process Design",
+      "category": "business"
+    },
+    {
+      "id": "strategy",
+      "label": "Strategy & Business Planning",
+      "category": "business"
+    },
+    {
+      "id": "documentation",
+      "label": "Documentation & Technical Writing",
+      "category": "business"
+    },
+    {
+      "id": "data_governance",
+      "label": "Data Governance",
+      "category": "business"
+    },
+    {
+      "id": "risk_analysis",
+      "label": "Risk Analysis",
+      "category": "business"
+    },
+    {
+      "id": "regulatory_compliance",
+      "label": "Regulatory Compliance",
+      "category": "business"
+    },
+    {
+      "id": "financial_analysis",
+      "label": "Financial Analysis",
+      "category": "analytics"
+    }
   ],
-  "transferable_categories": ["business", "analytics"],
-  "technical_categories": ["data", "engineering", "ai"]
+  "transferable_categories": [
+    "business",
+    "analytics"
+  ],
+  "technical_categories": [
+    "data",
+    "engineering",
+    "ai"
+  ]
 }

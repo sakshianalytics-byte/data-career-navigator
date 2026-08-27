@@ -357,13 +357,8 @@ with tab_nav:
         mg = evo["merged"]
         section("Your merged future role")
 
-        # Seniority-shift as regular text (no box)
+        # Seniority-shift headline (short, as regular text)
         st.markdown(f"**{ss['headline']}**")
-        st.markdown(
-            f"Production tasks AI can take: **{ss['production_exposure']}%** · "
-            f"Judgement core (stays human): **{ss['judgment_exposure']}%**"
-        )
-        st.markdown(ss["detail"])
 
         if mg:
             st.markdown(f"**Going the {mg['direction_label']} track**")
