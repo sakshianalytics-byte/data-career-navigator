@@ -97,20 +97,23 @@ def cosine_similarity(vec_a: np.ndarray, vec_b: np.ndarray) -> float:
 # ---------------------------------------------------------------------------
 
 def classify_skills(profile: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
-    """Bucket the user's skills into strong / moderate / emerging."""
+    """
+    Bucket the user's skills into strong (>=70) and moderate (>0 and <70).
+    Skills scored 0 are omitted entirely (not shown).
+    """
     labels = dl.skill_labels()
-    strong, moderate, emerging = [], [], []
+    strong, moderate = [], []
     for sid, val in profile.get("skills", {}).items():
+        if val <= 0:
+            continue  # skip skills the user doesn't have
         entry = {"id": sid, "label": labels.get(sid, sid), "level": val}
         if val >= 70:
             strong.append(entry)
-        elif val >= 40:
-            moderate.append(entry)
         else:
-            emerging.append(entry)
-    for bucket in (strong, moderate, emerging):
+            moderate.append(entry)
+    for bucket in (strong, moderate):
         bucket.sort(key=lambda e: e["level"], reverse=True)
-    return {"strong": strong, "moderate": moderate, "emerging": emerging}
+    return {"strong": strong, "moderate": moderate}
 
 
 def role_transformation_score(profile: dict[str, Any]) -> dict[str, Any]:

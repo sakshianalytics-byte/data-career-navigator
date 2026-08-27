@@ -131,7 +131,7 @@ def build_facts(result: dict[str, Any], recs: list[dict[str, Any]],
         ],
         "skill_profile": {
             bucket: [f"{e['label']} ({e['level']})" for e in result.get("skill_profile", {}).get(bucket, [])]
-            for bucket in ("strong", "moderate", "emerging")
+            for bucket in ("strong", "moderate")
         },
         "recommended_roles": [
             {
