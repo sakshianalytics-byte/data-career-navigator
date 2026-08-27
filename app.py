@@ -43,19 +43,16 @@ st.markdown(
       /* page width + breathing room */
       .block-container { max-width: 1080px; padding-top: 2rem; padding-bottom: 4rem; }
 
-      /* hero */
-      .hero {
-        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 55%, #9333ea 100%);
-        border-radius: 20px; padding: 34px 40px; color: #fff; margin-bottom: 8px;
-        box-shadow: 0 12px 30px rgba(79,70,229,.28);
+      /* lean top bar (gradient black, white text, Times New Roman) */
+      .topbar {
+        background: linear-gradient(135deg, #0b0b0f 0%, #1c1c22 55%, #2b2b33 100%);
+        border-radius: 12px; padding: 12px 22px; color: #fff; margin-bottom: 16px;
+        box-shadow: 0 6px 18px rgba(0,0,0,.28);
+        display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+        font-family: "Times New Roman", Times, serif;
       }
-      .hero h1 { font-size: 30px; font-weight: 800; margin: 0 0 6px; letter-spacing: -.3px; }
-      .hero p  { font-size: 15px; margin: 0; color: rgba(255,255,255,.9); max-width: 720px; line-height: 1.55; }
-      .hero .chips { margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap; }
-      .hero .chip {
-        background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.25);
-        padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 500;
-      }
+      .topbar .brand { font-size: 22px; font-weight: 700; letter-spacing: .2px; white-space: nowrap; }
+      .topbar .tag { font-size: 13px; color: rgba(255,255,255,.75); }
 
       /* section headline */
       .sec {
@@ -111,6 +108,16 @@ st.markdown(
       .card ul { margin: 0; padding-left: 18px; } .card li { font-size: 13.5px; padding: 2px 0; color: #374151; }
 
       .muted { color: #8a90a6; font-size: 12.5px; }
+
+      /* skill-group heading */
+      .skillgroup {
+        font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+        color: #4f46e5; margin: 14px 0 4px; padding-bottom: 3px; border-bottom: 1px solid #eceef5;
+      }
+      /* compact number inputs so 32 skills fit tightly */
+      div[data-testid="stNumberInput"] label p { font-size: 12px; margin-bottom: 2px; }
+      div[data-testid="stNumberInput"] input { padding: 4px 8px; }
+      div[data-testid="stNumberInput"] { margin-bottom: -6px; }
     </style>
     """,
     unsafe_allow_html=True,
@@ -154,19 +161,13 @@ if "opened" not in st.session_state:
     log_event("app_open")
 
 # ---------------------------------------------------------------------------
-# Hero header
+# Lean top bar
 # ---------------------------------------------------------------------------
 st.markdown(
     """
-    <div class="hero">
-      <h1>🧭 Data Career Navigator</h1>
-      <p>Find your next role in the AI economy. Evidence-based, explainable career guidance -
-      framed around <b>career evolution, not job replacement</b>.</p>
-      <div class="chips">
-        <span class="chip">Runs fully offline</span>
-        <span class="chip">Every score is explainable</span>
-        <span class="chip">No sign-up needed</span>
-      </div>
+    <div class="topbar">
+      <span class="brand">🧭 Data Career Navigator</span>
+      <span class="tag">Find your next role in the AI economy - career evolution, not job replacement.</span>
     </div>
     """,
     unsafe_allow_html=True,
@@ -180,47 +181,53 @@ tab_nav, tab_jd, tab_merge = st.tabs(
 # TAB 1: Career Navigator
 # ===========================================================================
 with tab_nav:
-    with st.expander("What do the terms mean? (Transition, Future Fit, Exposure...)"):
-        st.markdown(
-            f"- **Transition score** - {DEFN['transition']}\n"
-            f"- **Future Fit** - {DEFN['future_fit']}\n"
-            f"- **Remote Fit** - {DEFN['remote_fit']}\n"
-            f"- **Skill shortfall** - {DEFN['skill_shortfall']}\n"
-            f"- **Task transformation score** - {DEFN['transformation']}\n"
-            f"- **Exposure** - {DEFN['exposure']}\n"
-            f"- **AI impact** - {DEFN['ai_impact']}\n"
-            f"- **Est. time** - {DEFN['est_time']}\n"
-            f"- **O*NET code** - {DEFN['onet']}"
-        )
-
     section("Describe your profile", "Tell us where you are today - takes about a minute.")
 
     labels = dl.skill_labels()
-    skill_id_list = dl.skill_ids()
 
-    col_a, col_b = st.columns(2)
-    with col_a:
-        title = st.text_input("Current / most recent role", "Senior Data Analyst")
-        years = st.slider("Years of experience", 0, 30, 9)
+    # 5 profile inputs in a single row
+    ci1, ci2, ci3, ci4, ci5 = st.columns(5)
+    with ci1:
+        title = st.text_input("Current / recent role", "Senior Data Analyst")
+    with ci2:
+        years = st.number_input("Years of experience", min_value=0, max_value=40, value=9, step=1)
+    with ci3:
         industry = st.text_input("Industry", "Banking")
-    with col_b:
+    with ci4:
         location = st.text_input("Location", "India")
-        remote_pref = st.checkbox("Prefer remote work", value=True)
+    with ci5:
+        remote_pref = st.checkbox("Prefer remote", value=True)
 
     TOP_N = 4
 
     st.markdown("###### Rate your skills · score out of 100")
-    st.markdown('<p class="muted">0 = none / emerging · 100 = expert. Enter a score for the '
-                'skills you have; leave the rest at 0.</p>', unsafe_allow_html=True)
+    st.markdown('<p class="muted">0 = none / emerging · 100 = expert. Score the skills you have; '
+                'leave the rest at 0. Skills are grouped by area.</p>', unsafe_allow_html=True)
+
+    # user-friendly skill groups (id lists) - defines display order + headings
+    SKILL_GROUPS = [
+        ("Data & Technical Tools", ["sql", "data_modeling", "bi_reporting", "data_viz",
+                                    "python", "software_eng", "git_cicd", "cloud",
+                                    "data_engineering", "dbt_semantic"]),
+        ("AI & Machine Learning", ["machine_learning", "mlops", "genai_llm", "rag",
+                                   "ai_agents", "ai_evaluation", "prompt_eng"]),
+        ("Analytics & Finance", ["statistics", "experimentation", "financial_analysis"]),
+        ("Business & Product", ["business_analysis", "problem_framing", "product_mgmt",
+                                "strategy", "domain_knowledge", "documentation"]),
+        ("People & Operations", ["stakeholder_mgmt", "people_mgmt", "operations"]),
+        ("Risk & Compliance", ["data_governance", "risk_analysis", "regulatory_compliance"]),
+    ]
 
     skills: dict[str, int] = {}
-    cols = st.columns(3)
-    for i, sid in enumerate(skill_id_list):
-        with cols[i % 3]:
-            skills[sid] = st.number_input(
-                labels[sid], min_value=0, max_value=100,
-                value=0, step=5, key=f"sk_{sid}",
-            )
+    for group_name, ids in SKILL_GROUPS:
+        st.markdown(f'<div class="skillgroup">{group_name}</div>', unsafe_allow_html=True)
+        gcols = st.columns(4)
+        for i, sid in enumerate(ids):
+            with gcols[i % 4]:
+                skills[sid] = st.number_input(
+                    labels.get(sid, sid), min_value=0, max_value=100,
+                    value=0, step=5, key=f"sk_{sid}",
+                )
 
     st.write("")
     run = st.button("Analyze my career path", type="primary", use_container_width=True)
