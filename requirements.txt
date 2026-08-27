@@ -4,3 +4,5 @@ streamlit>=1.36
 # Google Sheets usage logging (optional at runtime; app works without it)
 gspread>=6.0
 google-auth>=2.30
+# Optional Gemini chat assistant (app works without a key)
+google-generativeai>=0.7
