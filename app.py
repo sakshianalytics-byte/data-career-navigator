@@ -270,10 +270,9 @@ with tab_nav:
         sp = result["skill_profile"]
         buckets = [
             ("b-strong", "💪 Strong", "70+", "strong"),
-            ("b-mod", "🔧 Moderate", "40-69", "moderate"),
-            ("b-emerg", "🌱 Emerging", "below 40", "emerging"),
+            ("b-mod", "🔧 Moderate", "1-69", "moderate"),
         ]
-        bcols = st.columns(3)
+        bcols = st.columns(2)
         for col, (cls, head, rng, key) in zip(bcols, buckets):
             rows = "".join(
                 f'<div class="row"><span>{e["label"]}</span><b>{e["level"]}</b></div>'
@@ -567,17 +566,22 @@ with tab_merge:
                     "AI absorbs the overlapping production work; the human-critical skills "
                     "of both roles combine into one.")
             skills_rows = "".join(
-                f'<div class="row"><span>{s["label"]}</span><b>{s["level"]}</b></div>'
+                '<div style="display:flex;justify-content:space-between;gap:12px;'
+                'padding:5px 0;border-bottom:1px solid rgba(99,102,241,.12);font-size:13.5px;">'
+                f'<span style="color:#374151;">{s["label"]}</span>'
+                f'<b style="color:#4f46e5;">{s["level"]}</b></div>'
                 for s in m["required_skills"])
             st.markdown(
                 '<div class="card" style="background:linear-gradient(135deg,#f5f3ff,#eef2ff);">'
-                f'<h4>New role</h4>'
+                f'<h4 style="margin:0 0 4px;">New role</h4>'
                 f'<p style="font-size:20px;font-weight:800;color:#6d28d9;margin:2px 0 8px;">{m["title"]}</p>'
-                f'<p class="muted" style="margin:0 0 10px;">Overall AI exposure: '
+                f'<p class="muted" style="margin:0 0 12px;">Overall AI exposure: '
                 f'<b>{m["ai_exposure"]}%</b> · the rest stays human.</p>'
-                f'<p style="font-size:13px;font-weight:600;color:#4f46e5;margin:6px 0 4px;">'
-                'Skills the merged role requires</p>'
+                f'<p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;'
+                f'color:#4f46e5;margin:6px 0 2px;">Skills the merged role requires</p>'
+                '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px;">'
                 f'{skills_rows}'
+                '</div>'
                 "</div>",
                 unsafe_allow_html=True,
             )
