@@ -33,8 +33,6 @@ try:
 except Exception:  # pragma: no cover
     st = None  # type: ignore
 
-_DEFAULT_MODEL = "gemini-2.5-flash-lite"
-
 
 # ---------------------------------------------------------------------------
 # Availability / config
@@ -51,11 +49,53 @@ def _api_key() -> str | None:
     return None
 
 
-def _model_name() -> str:
+def _configured_model() -> str | None:
+    """A model name explicitly set in secrets, if any (overrides auto-detect)."""
     try:
-        return st.secrets["gemini"].get("model", _DEFAULT_MODEL)  # type: ignore
+        m = st.secrets["gemini"].get("model")  # type: ignore
+        return m or None
     except Exception:
-        return _DEFAULT_MODEL
+        return None
+
+
+# Preference order when auto-detecting; we pick the first that the key supports.
+_MODEL_PREFERENCES = (
+    "flash-lite",   # cheapest / highest free limits
+    "flash",
+    "pro",
+)
+
+
+def _pick_model(genai) -> str:
+    """
+    Choose a model the API key can actually use for generateContent. Avoids the
+    404 you get from hard-coding a name Google has retired for your key.
+    """
+    # explicit override wins if provided
+    override = _configured_model()
+    if override:
+        return override if override.startswith("models/") else f"models/{override}"
+
+    # otherwise discover from the API
+    usable = []
+    try:
+        for m in genai.list_models():
+            methods = getattr(m, "supported_generation_methods", []) or []
+            if "generateContent" in methods:
+                usable.append(m.name)  # e.g. "models/gemini-2.5-flash"
+    except Exception:
+        usable = []
+
+    if not usable:
+        # last-resort guess; may still 404 but keeps a single code path
+        return "models/gemini-flash-latest"
+
+    # prefer flash-lite > flash > pro, and newer versions (sort desc by name)
+    for pref in _MODEL_PREFERENCES:
+        matches = sorted([n for n in usable if pref in n], reverse=True)
+        if matches:
+            return matches[0]
+    return sorted(usable, reverse=True)[0]
 
 
 def gemini_available() -> bool:
@@ -157,8 +197,16 @@ def ask_gemini(question: str, facts: dict[str, Any],
     try:
         import google.generativeai as genai
         genai.configure(api_key=_api_key())
+        # resolve a usable model once per session and cache it
+        model_name = None
+        if st is not None:
+            model_name = st.session_state.get("_gemini_model")
+        if not model_name:
+            model_name = _pick_model(genai)
+            if st is not None:
+                st.session_state["_gemini_model"] = model_name
         model = genai.GenerativeModel(
-            _model_name(),
+            model_name,
             system_instruction=_SYSTEM + "\n\nCOMPUTED FACTS (JSON):\n" + json.dumps(facts, indent=2),
         )
         convo = []
