@@ -372,16 +372,9 @@ with tab_nav:
                 f"**{mg['merged_title']}**"
             )
             st.markdown(mg["rationale"])
-            st.markdown(
-                f"Transition score **{mg['transition_score']}/100** · "
-                f"Est. time **{mg['estimated_time']}**"
-            )
-            st.markdown("**What to learn to get there**")
-            for s in (mg["skills_to_learn"] or ["You're well covered."]):
-                st.markdown(f"- {s}")
 
         # --- Deep dive ---
-        section("Deep dive", "Explore any recommended role in detail.")
+        section("Explore any recommended role in detail")
         role_titles = [r["title"] for r in recs]
         chosen = st.selectbox("Choose a role to explore", role_titles, key="deepdive")
         r = next(x for x in recs if x["title"] == chosen)
@@ -418,11 +411,6 @@ with tab_nav:
             col.markdown(
                 f'<div class="card"><h4>{head} · {rm[key]["theme"]}</h4><ul>{items}</ul></div>',
                 unsafe_allow_html=True)
-
-        st.write("")
-        st.markdown('<div class="sec-sub" style="margin-left:0;font-weight:600;color:#1e2233;">Recommended portfolio project</div>',
-                    unsafe_allow_html=True)
-        st.info(r["portfolio_project"])
 
         # --- Ask the assistant (optional Gemini chat, grounded in the results) ---
         section("Ask about your results",
