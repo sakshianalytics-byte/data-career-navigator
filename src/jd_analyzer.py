@@ -66,7 +66,7 @@ _SKILL_TO_TASKS: dict[str, list[str]] = {
     "product_mgmt": ["problem_framing", "stakeholder_management"],
     "domain_knowledge": ["business_interpretation"],
     "people_mgmt": ["leadership_mentoring"],
-    "operations": ["problem_framing"],
+    "operations": ["problem_framing", "leadership_mentoring"],
     "strategy": ["problem_framing"],
     "documentation": ["documentation"],
     "data_governance": ["governance_compliance"],
@@ -113,12 +113,20 @@ def score_tasks_for_role(role: dict[str, Any]) -> list[dict[str, Any]]:
     is_mgmt = role.get("family") in _MANAGEMENT_FAMILIES
 
     weights: dict[str, float] = {}
+    always_keep: set[str] = set()  # tasks driven by a standout (>=70) skill
     for sid, val in vector.items():
         contribution = float(val)
         if is_mgmt and sid in _TECHNICAL_SKILLS:
             contribution *= _MGMT_TECH_WEIGHT
         for task_id in _SKILL_TO_TASKS.get(sid, []):
             weights[task_id] = weights.get(task_id, 0.0) + contribution
+            # A NON-technical skill the role is strong in should always surface
+            # its task (e.g. People Management for a manager), even if a single
+            # skill drives it, so it isn't dropped by the relative-weight filter.
+            # We exclude technical skills so a manager's residual reporting/SQL
+            # doesn't force IC production tasks back into their view.
+            if val >= 70 and sid not in _TECHNICAL_SKILLS:
+                always_keep.add(task_id)
 
     # Drop tasks whose weight is trivial relative to the role's strongest task,
     # so a role only shows work it meaningfully does (e.g. a manager stops
@@ -128,8 +136,8 @@ def score_tasks_for_role(role: dict[str, Any]) -> list[dict[str, Any]]:
 
     rows = []
     for task_id, weight in weights.items():
-        if weight < min_keep:  # too weak to say this role really does the task
-            continue
+        if weight < min_keep and task_id not in always_keep:
+            continue  # too weak, and not driven by a standout skill
         task = tasks_by_id[task_id]
         level = task["impact"]
         rows.append({

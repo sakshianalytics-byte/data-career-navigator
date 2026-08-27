@@ -21,6 +21,7 @@ from src.engine import analyze_profile, recommend_transitions
 from src.jd_analyzer import analyze_jd
 from src.analytics import log_event
 from src.role_evolution import analyze_role_evolution, merge_two_roles
+from src import chat as chatmod
 
 st.set_page_config(
     page_title="Data Career Navigator",
@@ -422,6 +423,36 @@ with tab_nav:
         st.markdown('<div class="sec-sub" style="margin-left:0;font-weight:600;color:#1e2233;">Recommended portfolio project</div>',
                     unsafe_allow_html=True)
         st.info(r["portfolio_project"])
+
+        # --- Ask the assistant (optional Gemini chat, grounded in the results) ---
+        section("Ask about your results",
+                "Chat with an assistant that knows your computed results above. "
+                "It explains the numbers - it can't invent new ones.")
+        if not chatmod.gemini_available():
+            st.caption("💬 The chat assistant is off. Add a Gemini API key in the app's "
+                       "Secrets ([gemini] api_key) to enable it. Everything above works without it.")
+        else:
+            facts = chatmod.build_facts(result, recs, mg, ss)
+            if "chat_history" not in st.session_state:
+                st.session_state["chat_history"] = []
+            for turn in st.session_state["chat_history"]:
+                with st.chat_message(turn["role"],
+                                     avatar="🧭" if turn["role"] == "assistant" else "🧑"):
+                    st.markdown(turn["content"])
+            q = st.chat_input("e.g. Why is that my best move? What should I learn first?")
+            if q:
+                st.session_state["chat_history"].append({"role": "user", "content": q})
+                with st.chat_message("user", avatar="🧑"):
+                    st.markdown(q)
+                with st.chat_message("assistant", avatar="🧭"):
+                    with st.spinner("Thinking..."):
+                        ans = chatmod.ask_gemini(q, facts, st.session_state["chat_history"])
+                    st.markdown(ans)
+                st.session_state["chat_history"].append({"role": "assistant", "content": ans})
+                log_event("chat_message", detail=f"match={result['current_role_match']}",
+                          user_input=q[:500])
+            st.caption("Note: chat sends your computed results to Google Gemini. On the free "
+                       "tier, Google may use inputs to improve their products.")
 
 
 # ===========================================================================
