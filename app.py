@@ -664,6 +664,40 @@ with tab_about:
         "illustrative seed data and can be replaced with public sources (e.g. O*NET, BLS, "
         "open job-postings datasets) to make the numbers authoritative."
     )
+
+    section("How roles connect & merge")
+    st.markdown(
+        "Roles that sit next to each other in the business process work closely and share "
+        "tasks - so as AI absorbs the overlapping production work, adjacent roles become "
+        "realistic candidates to **merge** into one broader role. Recommendations follow this "
+        "task-flow, not just similar skills."
+    )
+    st.markdown(
+        """
+        <div style="background:#141726;border:1px solid #2a2f4a;border-radius:14px;padding:22px;color:#e7e9f3;">
+          <div style="display:flex;justify-content:center;gap:16px;flex-wrap:wrap;margin-bottom:8px;">
+            <div style="border:1px solid #3ba776;border-radius:10px;padding:8px 14px;font-weight:700;">DE Manager</div>
+            <div style="border:1px solid #3ba776;border-radius:10px;padding:8px 14px;font-weight:700;">Analytics / ML Manager</div>
+            <div style="border:1px solid #57d38c;border-radius:10px;padding:8px 14px;font-weight:700;">Business Head / Strategy / People Manager</div>
+          </div>
+          <div style="text-align:center;color:#f97316;font-size:20px;">&#8597;</div>
+          <div style="display:flex;justify-content:center;align-items:center;gap:16px;flex-wrap:wrap;">
+            <div style="border:1px solid #2a2f4a;border-radius:10px;padding:8px 14px;font-weight:700;">Data Engineer</div>
+            <div style="background:linear-gradient(135deg,#f97316,#ea580c);border-radius:12px;padding:12px 18px;font-weight:800;color:#fff;">Data / Business Analyst &middot; BI Engineer<br><span style="font-weight:500;font-size:13px;opacity:.9;">the central hub</span></div>
+            <div style="border:1px solid #2a2f4a;border-radius:10px;padding:8px 14px;font-weight:700;">Program / Product Manager</div>
+          </div>
+          <div style="text-align:center;color:#f97316;font-size:20px;">&#8595;</div>
+          <div style="display:flex;justify-content:center;">
+            <div style="border:1px solid #2a2f4a;border-radius:10px;padding:8px 14px;font-weight:700;">Data Scientist / Applied Scientist / ML Engineer</div>
+          </div>
+          <div style="text-align:center;color:#8a90a6;font-size:13px;margin-top:14px;">
+            Adjacent roles (linked above) are the realistic merge candidates as AI reshapes shared tasks.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     st.caption("By using this tool you acknowledge the limitations and disclaimer above.")
 
 
