@@ -155,6 +155,11 @@
       "id": "financial_analysis",
       "label": "Financial Analysis",
       "category": "analytics"
+    },
+    {
+      "id": "business_requirements",
+      "label": "Business Analysis / Requirements",
+      "category": "business"
     }
   ],
   "transferable_categories": [

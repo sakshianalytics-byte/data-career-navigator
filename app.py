@@ -214,8 +214,8 @@ with tab_nav:
         ("AI & Machine Learning", ["machine_learning", "mlops", "genai_llm", "rag",
                                    "ai_agents", "prompt_eng"]),
         ("Analytics & Finance", ["statistics", "experimentation", "financial_analysis"]),
-        ("Business & Product", ["business_analysis", "problem_framing", "product_mgmt",
-                                "strategy", "domain_knowledge", "documentation"]),
+        ("Business & Product", ["business_analysis", "business_requirements", "problem_framing",
+                                "product_mgmt", "strategy", "domain_knowledge", "documentation"]),
         ("People & Operations", ["stakeholder_mgmt", "people_mgmt", "operations"]),
         ("Risk & Compliance", ["data_governance", "risk_analysis", "regulatory_compliance"]),
     ]

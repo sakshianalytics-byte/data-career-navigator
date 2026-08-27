@@ -72,6 +72,7 @@ _SKILL_TO_TASKS: dict[str, list[str]] = {
     "risk_analysis": ["exploratory_analysis", "governance_compliance"],
     "regulatory_compliance": ["governance_compliance"],
     "financial_analysis": ["exploratory_analysis", "business_interpretation"],
+    "business_requirements": ["problem_framing", "documentation"],
 }
 
 
