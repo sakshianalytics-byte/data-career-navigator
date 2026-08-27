@@ -66,7 +66,7 @@ _SKILL_TO_TASKS: dict[str, list[str]] = {
     "product_mgmt": ["problem_framing", "stakeholder_management"],
     "domain_knowledge": ["business_interpretation"],
     "people_mgmt": ["leadership_mentoring"],
-    "operations": ["data_pipeline_ops", "problem_framing"],
+    "operations": ["problem_framing"],
     "strategy": ["problem_framing"],
     "documentation": ["documentation"],
     "data_governance": ["governance_compliance"],
@@ -80,25 +80,55 @@ _SKILL_TO_TASKS: dict[str, list[str]] = {
 # Role-based transformation table (used by engine)
 # ---------------------------------------------------------------------------
 
+# Technical skills whose contribution to the task table is down-weighted for
+# management-family roles: a manager who "knows SQL" mostly oversees/reviews
+# hands-on work rather than producing it, so it should not dominate their
+# AI-transformation task mix.
+_TECHNICAL_SKILLS = {
+    "sql", "python", "software_eng", "git_cicd", "cloud", "data_engineering",
+    "dbt_semantic", "data_modeling", "mlops", "machine_learning", "bi_reporting",
+    "data_viz", "rag", "ai_agents",
+}
+# Families whose hands-on technical skills are down-weighted in the task table
+# (managers and product roles mostly oversee/decide rather than produce).
+_MANAGEMENT_FAMILIES = {"management", "product"}
+# multiplier applied to technical skills' task contribution for those families
+_MGMT_TECH_WEIGHT = 0.35
+
+
 def score_tasks_for_role(role: dict[str, Any]) -> list[dict[str, Any]]:
     """
     Build a task-level AI-impact table for a role from its skill vector.
 
     A task's weight = how strongly the role's skills drive that task. We only
     include tasks whose driving skills are meaningfully present in the role.
+
+    For management-family roles, technical skills contribute at a reduced weight
+    so their task mix reflects leadership/oversight work rather than hands-on IC
+    production they merely supervise.
     """
     tasks_by_id = {t["id"]: t for t in _tasks()}
     levels = _impact_levels()
     vector = role.get("vector", {})
+    is_mgmt = role.get("family") in _MANAGEMENT_FAMILIES
 
     weights: dict[str, float] = {}
     for sid, val in vector.items():
+        contribution = float(val)
+        if is_mgmt and sid in _TECHNICAL_SKILLS:
+            contribution *= _MGMT_TECH_WEIGHT
         for task_id in _SKILL_TO_TASKS.get(sid, []):
-            weights[task_id] = weights.get(task_id, 0.0) + float(val)
+            weights[task_id] = weights.get(task_id, 0.0) + contribution
+
+    # Drop tasks whose weight is trivial relative to the role's strongest task,
+    # so a role only shows work it meaningfully does (e.g. a manager stops
+    # showing low-weight IC technical tasks they merely oversee).
+    max_weight = max(weights.values(), default=0.0)
+    min_keep = max(40.0, 0.45 * max_weight)
 
     rows = []
     for task_id, weight in weights.items():
-        if weight < 40:  # skill signal too weak to say the role does this task
+        if weight < min_keep:  # too weak to say this role really does the task
             continue
         task = tasks_by_id[task_id]
         level = task["impact"]

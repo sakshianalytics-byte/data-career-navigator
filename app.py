@@ -20,7 +20,7 @@ from src import data_loader as dl
 from src.engine import analyze_profile, recommend_transitions
 from src.jd_analyzer import analyze_jd
 from src.analytics import log_event
-from src.role_evolution import analyze_role_evolution
+from src.role_evolution import analyze_role_evolution, merge_two_roles
 
 st.set_page_config(
     page_title="Data Career Navigator",
@@ -171,7 +171,8 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-tab_nav, tab_jd = st.tabs(["  Career Navigator  ", "  Job Description Analyzer  "])
+tab_nav, tab_jd, tab_merge = st.tabs(
+    ["  Career Navigator  ", "  Job Description Analyzer  ", "  Role Merge Explorer  "])
 
 
 # ===========================================================================
@@ -208,15 +209,8 @@ with tab_nav:
     TOP_N = 4
 
     st.markdown("###### Rate your skills · score out of 100")
-    st.markdown('<p class="muted">0 = none / emerging · 100 = expert. Leave a skill at 0 if you '
-                'don\'t have it yet.</p>', unsafe_allow_html=True)
-
-    defaults = {
-        "sql": 90, "bi_reporting": 85, "data_viz": 80, "statistics": 70,
-        "python": 55, "data_modeling": 55, "business_analysis": 80,
-        "stakeholder_mgmt": 80, "problem_framing": 70, "domain_knowledge": 75,
-        "genai_llm": 25,
-    }
+    st.markdown('<p class="muted">0 = none / emerging · 100 = expert. Enter a score for the '
+                'skills you have; leave the rest at 0.</p>', unsafe_allow_html=True)
 
     skills: dict[str, int] = {}
     cols = st.columns(3)
@@ -224,7 +218,7 @@ with tab_nav:
         with cols[i % 3]:
             skills[sid] = st.number_input(
                 labels[sid], min_value=0, max_value=100,
-                value=int(defaults.get(sid, 0)), step=5, key=f"sk_{sid}",
+                value=0, step=5, key=f"sk_{sid}",
             )
 
     st.write("")
@@ -503,6 +497,79 @@ with tab_jd:
             )
             with st.expander("How is this calculated?"):
                 st.json(jd["explanation"])
+
+
+# ===========================================================================
+# TAB 3: Role Merge Explorer
+# ===========================================================================
+with tab_merge:
+    section("Role Merge Explorer",
+            "Pick any two roles to see how AI could merge them into one new role - "
+            "and what skills that merged role would need.")
+
+    role_map = {r["title"]: r["id"] for r in dl.load_roles()["roles"]}
+    role_titles = sorted(role_map)
+
+    mc1, mc2 = st.columns(2)
+    with mc1:
+        role_a_title = st.selectbox("First role", role_titles,
+                                    index=role_titles.index("Business Analyst")
+                                    if "Business Analyst" in role_titles else 0,
+                                    key="merge_a")
+    with mc2:
+        role_b_title = st.selectbox("Second role", role_titles,
+                                    index=role_titles.index("Product Manager")
+                                    if "Product Manager" in role_titles else 1,
+                                    key="merge_b")
+
+    do_merge = st.button("Merge these roles", type="primary", key="merge_btn")
+
+    if do_merge:
+        if role_a_title == role_b_title:
+            st.warning("Pick two different roles to merge.")
+        else:
+            res = merge_two_roles(role_map[role_a_title], role_map[role_b_title])
+            log_event("roles_merged", detail=f"{role_a_title} + {role_b_title}",
+                      output=f"merged={res['merged']['title']}; exposure={res['merged']['ai_exposure']}")
+
+            # --- the two source roles side by side ---
+            def role_card(side: dict) -> str:
+                rows = "".join(
+                    f'<div class="row"><span>{t["task"]}</span>'
+                    f'<b>{t["exposure"]}%</b></div>' for t in side["tasks"])
+                if not rows:
+                    rows = '<div class="row muted">-</div>'
+                return (f'<div class="bucket"><h4 style="color:#1e2233;">{side["title"]}'
+                        f' <span class="muted">· {side["ai_exposure"]}% AI exposure</span></h4>'
+                        f'{rows}</div>')
+
+            cc1, cc2 = st.columns(2)
+            cc1.markdown(role_card(res["role_a"]), unsafe_allow_html=True)
+            cc2.markdown(role_card(res["role_b"]), unsafe_allow_html=True)
+
+            # --- the merged role ---
+            m = res["merged"]
+            section("The merged role",
+                    "AI absorbs the overlapping production work; the human-critical skills "
+                    "of both roles combine into one.")
+            skills_rows = "".join(
+                f'<div class="row"><span>{s["label"]}</span><b>{s["level"]}</b></div>'
+                for s in m["required_skills"])
+            st.markdown(
+                '<div class="card" style="background:linear-gradient(135deg,#f5f3ff,#eef2ff);">'
+                f'<h4>New role</h4>'
+                f'<p style="font-size:20px;font-weight:800;color:#6d28d9;margin:2px 0 8px;">{m["title"]}</p>'
+                f'<p class="muted" style="margin:0 0 10px;">Overall AI exposure: '
+                f'<b>{m["ai_exposure"]}%</b> · the rest stays human.</p>'
+                f'<p style="font-size:13px;font-weight:600;color:#4f46e5;margin:6px 0 4px;">'
+                'Skills the merged role requires</p>'
+                f'{skills_rows}'
+                "</div>",
+                unsafe_allow_html=True,
+            )
+            st.caption("Merged skills combine the human-critical skills of both roles plus "
+                       "AI-orchestration skills (GenAI, prompting, agents, evaluation) needed to "
+                       "supervise the AI doing the routine work. Illustrative seed data.")
 
 
 st.divider()

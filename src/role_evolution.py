@@ -158,3 +158,71 @@ def analyze_role_evolution(profile: dict[str, Any], direction: str) -> dict[str,
         "seniority_shift": seniority_shift(matched),
         "merged": merged_role_for(profile, matched, direction),
     }
+
+
+# ---------------------------------------------------------------------------
+# 3. Merge ANY two roles (Role Merge Explorer tab)
+# ---------------------------------------------------------------------------
+
+def _role_ai_exposure(role: dict[str, Any]) -> int:
+    """Weight-averaged AI exposure across the tasks a role performs (0-100)."""
+    from .jd_analyzer import score_tasks_for_role
+    rows = score_tasks_for_role(role)
+    if not rows:
+        return 0
+    num = sum(t["exposure"] * t["weight"] for t in rows)
+    den = sum(t["weight"] for t in rows)
+    return round(num / den) if den else 0
+
+
+def _merged_title(role_a: dict[str, Any], role_b: dict[str, Any]) -> str:
+    """Prefer a curated merged title if one of the roles maps to the other."""
+    merges = dl.load_role_merges()["merges"]
+    for src, partner in ((role_a, role_b), (role_b, role_a)):
+        for spec in merges.get(src["id"], {}).values():
+            if spec.get("partner") == partner["id"]:
+                return spec["title"]
+    # otherwise coin a name from both
+    return f"{role_a['title']} × {role_b['title']} (merged)"
+
+
+def merge_two_roles(role_a_id: str, role_b_id: str) -> dict[str, Any]:
+    """
+    Merge two arbitrary roles into one. Returns each role's task/exposure table,
+    the synthesized merged role, its overall AI exposure %, the human-critical
+    skills the merged role still needs, and a suggested name.
+    """
+    from .jd_analyzer import score_tasks_for_role
+    roles = dl.roles_by_id()
+    a, b = roles[role_a_id], roles[role_b_id]
+    labels = dl.skill_labels()
+
+    title = _merged_title(a, b)
+    merged = synthesize_merged_role(a, b, title)
+
+    # skills the merged role requires most (its defining human + glue skills)
+    top_skills = sorted(merged["vector"].items(), key=lambda kv: kv[1], reverse=True)
+    required_skills = [
+        {"label": labels.get(sid, sid), "level": val}
+        for sid, val in top_skills if val >= 55
+    ][:10]
+
+    return {
+        "role_a": {"title": a["title"], "ai_exposure": _role_ai_exposure(a),
+                   "tasks": score_tasks_for_role(a)},
+        "role_b": {"title": b["title"], "ai_exposure": _role_ai_exposure(b),
+                   "tasks": score_tasks_for_role(b)},
+        "merged": {
+            "title": title,
+            "ai_exposure": _role_ai_exposure(merged),
+            "tasks": score_tasks_for_role(merged),
+            "required_skills": required_skills,
+            "glue_skills": [labels.get(g, g) for g in merged.get("glue_skills", [])],
+            "market": {
+                "demand": merged.get("demand"), "growth": merged.get("growth"),
+                "remote_share": merged.get("remote_share"),
+                "ai_resilience": merged.get("ai_resilience"),
+                "salary_index": merged.get("salary_index"),
+            },
+        },
+    }
