@@ -565,6 +565,17 @@ with tab_merge:
             section("The merged role",
                     "AI absorbs the overlapping production work; the human-critical skills "
                     "of both roles combine into one.")
+
+            # Gemini narrative: inherited (present) vs glue skills (to add)
+            glue = set(m.get("glue_skills", []))
+            inherited = [s["label"] for s in m["required_skills"] if s["label"] not in glue]
+            to_add = [s["label"] for s in m["required_skills"] if s["label"] in glue] or list(glue)
+            para = chatmod.merged_role_paragraph(
+                m["title"], res["role_a"]["title"], res["role_b"]["title"],
+                m["ai_exposure"], inherited, to_add)
+            if para:
+                st.markdown(para)
+
             skills_rows = "".join(
                 '<div style="display:flex;justify-content:space-between;gap:12px;'
                 'padding:5px 0;border-bottom:1px solid rgba(99,102,241,.12);font-size:13.5px;">'
@@ -585,8 +596,25 @@ with tab_merge:
                 "</div>",
                 unsafe_allow_html=True,
             )
+            # Mindset disclaimer - skills can be merged, ways of thinking cannot
+            st.markdown(
+                '<div style="border-left:4px solid #d97706;background:#fff8ef;'
+                'padding:12px 16px;border-radius:0 10px 10px 0;margin-top:12px;font-size:13.5px;'
+                'color:#374151;">'
+                '<b style="color:#b45309;">A note on mindset:</b> this tool can merge '
+                f'<i>skills</i>, but not <i>ways of thinking</i>. {res["role_a"]["title"]} and '
+                f'{res["role_b"]["title"]} approach problems differently - one tends to think in a '
+                'deep, detail-oriented way about the data or product, while the other thinks more '
+                'broadly across the product, its users, required features, and cross-team buy-in. '
+                'The merged role is not just the sum of both skill sets; excelling in it means '
+                'deliberately building a <b>new mindset</b> that blends both perspectives. How far '
+                'you succeed depends on how well you develop that combined way of thinking.'
+                '</div>',
+                unsafe_allow_html=True,
+            )
+
             st.caption("Merged skills combine the human-critical skills of both roles plus "
-                       "AI-orchestration skills (GenAI, prompting, agents, evaluation) needed to "
+                       "AI-orchestration skills (GenAI, prompting, agents) needed to "
                        "supervise the AI doing the routine work. Illustrative seed data.")
 
 

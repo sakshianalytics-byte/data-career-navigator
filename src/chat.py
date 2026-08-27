@@ -219,3 +219,54 @@ def ask_gemini(question: str, facts: dict[str, Any],
     except Exception as exc:  # keep the app alive on any API error
         return (f"The assistant is temporarily unavailable ({type(exc).__name__}). "
                 "Your computed results above are unaffected.")
+
+
+# ---------------------------------------------------------------------------
+# Merged-role narrative (Role Merge Explorer)
+# ---------------------------------------------------------------------------
+
+_MERGE_SYSTEM = (
+    "You are a concise, practical careers writer for a data & AI career tool. "
+    "Write EXACTLY ONE paragraph of about 100 words (no headings, no bullet points) "
+    "describing a NEW merged role created when AI automates the overlapping routine work "
+    "of two existing roles. Rules: use ONLY the facts given; do not invent skills or numbers; "
+    "clearly mention the key skills the merged role INHERITS (already present from the two "
+    "roles) and the NEW AI-orchestration skills the person must ADD to their kitty; frame it "
+    "as an opportunity (career evolution), warm and plain-spoken."
+)
+
+
+def merged_role_paragraph(merged_title: str, role_a: str, role_b: str,
+                          ai_exposure: int, inherited_skills: list[str],
+                          add_skills: list[str]) -> str:
+    """
+    Generate a ~100-word paragraph describing the merged role. Returns "" if
+    Gemini isn't available so the caller can just show the structured grid.
+    """
+    if not gemini_available():
+        return ""
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=_api_key())
+        facts = {
+            "merged_role": merged_title,
+            "merges": [role_a, role_b],
+            "overall_ai_exposure_pct": ai_exposure,
+            "skills_inherited_present": inherited_skills,
+            "ai_orchestration_skills_to_add": add_skills,
+        }
+        model_name = None
+        if st is not None:
+            model_name = st.session_state.get("_gemini_model")
+        if not model_name:
+            model_name = _pick_model(genai)
+            if st is not None:
+                st.session_state["_gemini_model"] = model_name
+        model = genai.GenerativeModel(
+            model_name,
+            system_instruction=_MERGE_SYSTEM + "\n\nFACTS (JSON):\n" + json.dumps(facts, indent=2),
+        )
+        resp = model.generate_content("Write the paragraph.")
+        return (resp.text or "").strip()
+    except Exception:
+        return ""

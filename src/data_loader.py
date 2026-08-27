@@ -73,6 +73,12 @@ def load_role_merges() -> dict[str, Any]:
     return _read_json("role_merges.json")
 
 
+@lru_cache(maxsize=1)
+def load_role_adjacency() -> dict[str, Any]:
+    """Business task-flow adjacency: which roles are one step away from each role."""
+    return _read_json("role_adjacency.json")
+
+
 def skill_ids() -> list[str]:
     """Ordered list of canonical skill ids (defines vector dimension order)."""
     return [s["id"] for s in load_skills()["skills"]]

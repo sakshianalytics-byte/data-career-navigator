@@ -441,10 +441,20 @@ def recommend_transitions(profile: dict[str, Any], top_n: int = 5,
     current = closest_role(profile)
     current_id = current["role"]["id"]
 
+    # Restrict candidates to roles that are ONE STEP AWAY in the business
+    # task-flow (adjacency graph), so we only suggest realistic, workflow-close
+    # moves - not roles that are merely skill-similar but far in the flow.
+    adjacency = dl.load_role_adjacency()["neighbors"]
+    neighbor_ids = set(adjacency.get(current_id, []))
+
     results = []
     for role in dl.load_roles()["roles"]:
         if role["id"] == current_id:
             continue  # don't recommend the role they're already in
+        # if we have an adjacency list for the current role, only consider its
+        # task-flow neighbors; otherwise fall back to all roles.
+        if neighbor_ids and role["id"] not in neighbor_ids:
+            continue
         trans = transition_score(profile, role)
         fit = future_fit(profile, role, trans)
         gap = skill_gap(profile, role)
