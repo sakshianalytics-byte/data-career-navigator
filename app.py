@@ -54,9 +54,12 @@ st.markdown(
       .topbar .brand { font-size: 22px; font-weight: 700; letter-spacing: .2px; white-space: nowrap; }
       .topbar .tag { font-size: 13px; color: rgba(255,255,255,.75); }
 
+      /* trim the empty space between the tab bar and the first content */
+      .stTabs [data-baseweb="tab-panel"] { padding-top: 6px; }
+
       /* section headline */
       .sec {
-        display: flex; align-items: center; gap: 10px; margin: 30px 0 6px;
+        display: flex; align-items: center; gap: 10px; margin: 14px 0 6px;
         font-size: 19px; font-weight: 700; color: #1e2233;
       }
       .sec::before {
@@ -114,10 +117,10 @@ st.markdown(
         font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
         color: #4f46e5; margin: 14px 0 4px; padding-bottom: 3px; border-bottom: 1px solid #eceef5;
       }
-      /* compact number inputs so 32 skills fit tightly */
-      div[data-testid="stNumberInput"] label p { font-size: 12px; margin-bottom: 2px; }
-      div[data-testid="stNumberInput"] input { padding: 4px 8px; }
-      div[data-testid="stNumberInput"] { margin-bottom: -6px; }
+      /* compact skill text inputs so 32 skills fit tightly (no +/- steppers) */
+      div[data-testid="stTextInput"] label p { font-size: 11.5px; margin-bottom: 1px; }
+      div[data-testid="stTextInput"] input { padding: 3px 8px; }
+      div[data-testid="stTextInput"] { margin-bottom: -4px; }
     </style>
     """,
     unsafe_allow_html=True,
@@ -166,7 +169,7 @@ if "opened" not in st.session_state:
 st.markdown(
     """
     <div class="topbar">
-      <span class="brand">🧭 Data Career Navigator</span>
+      <span class="brand">Data Career Navigator</span>
       <span class="tag">Find your next role in the AI economy - career evolution, not job replacement.</span>
     </div>
     """,
@@ -181,28 +184,26 @@ tab_nav, tab_jd, tab_merge = st.tabs(
 # TAB 1: Career Navigator
 # ===========================================================================
 with tab_nav:
-    section("Describe your profile", "Tell us where you are today - takes about a minute.")
+    section("Describe your profile")
 
     labels = dl.skill_labels()
 
     # 5 profile inputs in a single row
     ci1, ci2, ci3, ci4, ci5 = st.columns(5)
     with ci1:
-        title = st.text_input("Current / recent role", "Senior Data Analyst")
+        title = st.text_input("Current / recent role", value="", placeholder="e.g. Senior Data Analyst")
     with ci2:
-        years = st.number_input("Years of experience", min_value=0, max_value=40, value=9, step=1)
+        years = st.number_input("Years of experience", min_value=0, max_value=40, value=0, step=1)
     with ci3:
-        industry = st.text_input("Industry", "Banking")
+        industry = st.text_input("Industry", value="", placeholder="e.g. Banking")
     with ci4:
-        location = st.text_input("Location", "India")
+        location = st.text_input("Location", value="", placeholder="e.g. India")
     with ci5:
-        remote_pref = st.checkbox("Prefer remote", value=True)
+        remote_pref = st.checkbox("Prefer remote", value=False)
 
     TOP_N = 4
 
-    st.markdown("###### Rate your skills · score out of 100")
-    st.markdown('<p class="muted">0 = none / emerging · 100 = expert. Score the skills you have; '
-                'leave the rest at 0. Skills are grouped by area.</p>', unsafe_allow_html=True)
+    section("Rate your skills · score out of 100")
 
     # user-friendly skill groups (id lists) - defines display order + headings
     SKILL_GROUPS = [
@@ -218,16 +219,22 @@ with tab_nav:
         ("Risk & Compliance", ["data_governance", "risk_analysis", "regulatory_compliance"]),
     ]
 
+    def _score(raw: str) -> int:
+        """Parse a skill box into a clamped 0-100 int; blank/invalid -> 0."""
+        try:
+            return max(0, min(100, int(float(raw))))
+        except (ValueError, TypeError):
+            return 0
+
     skills: dict[str, int] = {}
     for group_name, ids in SKILL_GROUPS:
         st.markdown(f'<div class="skillgroup">{group_name}</div>', unsafe_allow_html=True)
-        gcols = st.columns(4)
+        gcols = st.columns(6)
         for i, sid in enumerate(ids):
-            with gcols[i % 4]:
-                skills[sid] = st.number_input(
-                    labels.get(sid, sid), min_value=0, max_value=100,
-                    value=0, step=5, key=f"sk_{sid}",
-                )
+            with gcols[i % 6]:
+                raw = st.text_input(labels.get(sid, sid), value="", placeholder="0",
+                                    key=f"sk_{sid}")
+                skills[sid] = _score(raw)
 
     st.write("")
     run = st.button("Analyze my career path", type="primary", use_container_width=True)
