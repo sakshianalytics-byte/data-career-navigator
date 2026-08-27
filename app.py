@@ -215,7 +215,7 @@ with tab_nav:
     with ci5:
         remote_pref = st.checkbox("Prefer remote", value=False)
 
-    TOP_N = 4
+    TOP_N = 2
 
     section("Rate your skills · score out of 10")
 

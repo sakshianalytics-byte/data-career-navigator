@@ -175,6 +175,45 @@ def closest_role(profile: dict[str, Any]) -> dict[str, Any]:
     return best
 
 
+def _normalize_title(text: str) -> str:
+    """Lowercase, strip punctuation/parentheticals and collapse spaces for matching."""
+    import re
+    text = text.lower()
+    text = re.sub(r"\(.*?\)", " ", text)          # drop parentheticals e.g. "(GenAI)"
+    text = re.sub(r"[^a-z0-9]+", " ", text)        # punctuation -> space
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def match_role_by_title(title: str | None) -> dict[str, Any] | None:
+    """
+    Resolve a free-text role title the user typed to a seed role, or None.
+
+    Matches on a normalized title: exact normalized equality first, then a
+    contained-substring match (so "Sr. Data Analyst" or "Senior Data Analyst -
+    Banking" still resolve to Senior Data Analyst). Returns the role dict.
+    """
+    if not title or not title.strip():
+        return None
+    target = _normalize_title(title)
+    if not target:
+        return None
+    roles = dl.load_roles()["roles"]
+    # 1) exact normalized match
+    for role in roles:
+        if _normalize_title(role["title"]) == target:
+            return role
+    # 2) the typed title contains a role title, or vice-versa (longest wins)
+    candidates = []
+    for role in roles:
+        rt = _normalize_title(role["title"])
+        if rt and (rt in target or target in rt):
+            candidates.append((len(rt), role))
+    if candidates:
+        candidates.sort(key=lambda c: c[0], reverse=True)
+        return candidates[0][1]
+    return None
+
+
 # ---------------------------------------------------------------------------
 # 3. Transferability, gaps, and transition scoring
 # ---------------------------------------------------------------------------
@@ -438,23 +477,76 @@ def recommend_transitions(profile: dict[str, Any], top_n: int = 5,
     Score every seed role as a destination and rank them. If `direction` is set
     (ic_tech / ic_nontech / people), recommendations are nudged toward that track.
     """
-    current = closest_role(profile)
-    current_id = current["role"]["id"]
+    # The user's stated (typed) role is authoritative when we can resolve it;
+    # otherwise fall back to the closest role by skill vector.
+    stated = match_role_by_title(profile.get("title"))
+    vector_match = closest_role(profile)
+    anchor_id = stated["id"] if stated else vector_match["role"]["id"]
+
+    # Roles the user is already in - never recommend these back to them.
+    # Includes both the typed role and the vector-matched role, so
+    # "Senior Data Analyst" won't be suggested when that's their current role.
+    exclude_ids = {vector_match["role"]["id"]}
+    if stated:
+        exclude_ids.add(stated["id"])
 
     # Restrict candidates to roles that are ONE STEP AWAY in the business
     # task-flow (adjacency graph), so we only suggest realistic, workflow-close
     # moves - not roles that are merely skill-similar but far in the flow.
+    # Anchor the neighborhood on the user's stated role when known.
     adjacency = dl.load_role_adjacency()["neighbors"]
-    neighbor_ids = set(adjacency.get(current_id, []))
+    neighbor_ids = set(adjacency.get(anchor_id, []))
+    neighbor_ids -= exclude_ids  # a role can't be its own neighbor suggestion
+
+    # Families allowed for the chosen growth track. When a direction is set we
+    # HARD-FILTER to these families so, e.g., "People Management" never returns
+    # an IC engineering role like Analytics Engineer or Data Engineer.
+    allowed_families = DIRECTION_FAMILIES.get(direction) if direction else None
+
+    def _passes_direction(role: dict[str, Any]) -> bool:
+        return allowed_families is None or role.get("family") in allowed_families
+
+    # Seniority rule: with more than 7 years' experience, stop recommending
+    # "analyst" (individual-contributor) titles and steer toward leadership -
+    # manager / lead / head / director / architect roles.
+    years = float(profile.get("years_experience", 0) or 0)
+    senior_user = years > 7
+
+    def _is_analyst_title(role: dict[str, Any]) -> bool:
+        return "analyst" in role.get("title", "").lower()
+
+    def _passes_seniority(role: dict[str, Any]) -> bool:
+        return not (senior_user and _is_analyst_title(role))
+
+    # Build the candidate pool. Preference order:
+    #   1) direction-matched AND task-flow-adjacent  (most relevant)
+    #   2) direction-matched (adjacency relaxed)      (still on-track)
+    # We only fall back to (2) if (1) is empty, so we never show off-track roles.
+    def _collect(require_adjacency: bool) -> list[dict[str, Any]]:
+        pool = []
+        for role in dl.load_roles()["roles"]:
+            if role["id"] in exclude_ids:
+                continue
+            if not _passes_direction(role):
+                continue
+            if not _passes_seniority(role):
+                continue  # drop analyst titles for experienced users
+            if require_adjacency and neighbor_ids and role["id"] not in neighbor_ids:
+                continue
+            pool.append(role)
+        return pool
+
+    candidate_roles = _collect(require_adjacency=True)
+    if not candidate_roles:
+        candidate_roles = _collect(require_adjacency=False)
+    # Last-resort safety net: if the seniority rule filtered everything out,
+    # relax it so the user still gets on-track suggestions rather than none.
+    if not candidate_roles and senior_user:
+        senior_user = False
+        candidate_roles = _collect(require_adjacency=True) or _collect(require_adjacency=False)
 
     results = []
-    for role in dl.load_roles()["roles"]:
-        if role["id"] == current_id:
-            continue  # don't recommend the role they're already in
-        # if we have an adjacency list for the current role, only consider its
-        # task-flow neighbors; otherwise fall back to all roles.
-        if neighbor_ids and role["id"] not in neighbor_ids:
-            continue
+    for role in candidate_roles:
         trans = transition_score(profile, role)
         fit = future_fit(profile, role, trans)
         gap = skill_gap(profile, role)
@@ -485,11 +577,21 @@ def recommend_transitions(profile: dict[str, Any], top_n: int = 5,
             },
         })
 
-    # rank primarily by future fit, blend with transition realism, then nudge
-    # toward the user's chosen growth direction.
+    # Leadership-title cues used to steer experienced users toward senior roles.
+    _LEADERSHIP_CUES = ("manager", "lead", "head", "director", "architect",
+                        "principal", "chief", "vp")
+
+    def _leadership_boost(title: str) -> float:
+        if not senior_user:
+            return 0.0
+        return 10.0 if any(c in title.lower() for c in _LEADERSHIP_CUES) else 0.0
+
+    # All candidates are already on the chosen track (hard-filtered above), so
+    # rank on quality: future fit blended with transition realism, plus a nudge
+    # toward leadership titles for experienced (7+ yr) users.
     results.sort(
         key=lambda r: (0.6 * r["future_fit"] + 0.4 * r["transition_score"]
-                       + _direction_boost({"family": r["family"]}, direction)),
+                       + _leadership_boost(r["title"])),
         reverse=True,
     )
     return results[:top_n]
