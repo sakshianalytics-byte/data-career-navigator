@@ -19,7 +19,7 @@ import pandas as pd
 from src import data_loader as dl
 from src.engine import analyze_profile, recommend_transitions
 from src.jd_analyzer import analyze_jd
-from src.analytics import log_event
+from src.analytics import (log_event, SHEET_NAVIGATOR, SHEET_JD, SHEET_MERGE)
 from src.role_evolution import analyze_role_evolution, merge_two_roles
 from src import chat as chatmod
 
@@ -65,7 +65,7 @@ st.markdown(
       }
       .sec::before {
         content: ""; width: 5px; height: 22px; border-radius: 3px;
-        background: linear-gradient(180deg,#4f46e5,#9333ea);
+        background: linear-gradient(180deg,#f97316,#ea580c);
       }
       .sec-sub { color: #6b7280; font-size: 13px; margin: 0 0 14px 15px; }
 
@@ -76,7 +76,7 @@ st.markdown(
       }
       .bucket h4 { margin: 0 0 10px; font-size: 14px; font-weight: 700; }
       .bucket .row { display: flex; justify-content: space-between; font-size: 13px; padding: 3px 0; color: #374151; }
-      .bucket .row b { color: #4f46e5; font-variant-numeric: tabular-nums; }
+      .bucket .row b { color: #ea580c; font-variant-numeric: tabular-nums; }
       .b-strong h4 { color: #059669; } .b-mod h4 { color: #d97706; } .b-emerg h4 { color: #6b7280; }
 
       /* metric cards */
@@ -89,8 +89,8 @@ st.markdown(
 
       /* buttons */
       .stButton > button[kind="primary"] {
-        background: linear-gradient(135deg,#4f46e5,#7c3aed); border: none; border-radius: 10px;
-        font-weight: 600; padding: 8px 20px; box-shadow: 0 4px 12px rgba(79,70,229,.28);
+        background: linear-gradient(135deg,#f97316,#ea580c); border: none; border-radius: 10px;
+        font-weight: 600; padding: 8px 20px; box-shadow: 0 4px 12px rgba(234,88,12,.28);
       }
       .stButton > button[kind="primary"]:hover { filter: brightness(1.06); }
 
@@ -108,7 +108,7 @@ st.markdown(
         background: #fff; border: 1px solid #eceef5; border-radius: 14px; padding: 16px 18px;
         box-shadow: 0 1px 3px rgba(16,24,64,.05);
       }
-      .card h4 { margin: 0 0 8px; font-size: 13px; font-weight: 700; color: #4f46e5; text-transform: uppercase; letter-spacing: .4px; }
+      .card h4 { margin: 0 0 8px; font-size: 13px; font-weight: 700; color: #ea580c; text-transform: uppercase; letter-spacing: .4px; }
       .card ul { margin: 0; padding-left: 18px; } .card li { font-size: 13.5px; padding: 2px 0; color: #374151; }
 
       .muted { color: #8a90a6; font-size: 12.5px; }
@@ -116,7 +116,7 @@ st.markdown(
       /* skill-group heading */
       .skillgroup {
         font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
-        color: #4f46e5; margin: 14px 0 4px; padding-bottom: 3px; border-bottom: 1px solid #eceef5;
+        color: #ea580c; margin: 14px 0 4px; padding-bottom: 3px; border-bottom: 1px solid #eceef5;
       }
       /* compact skill text inputs so 32 skills fit tightly (no +/- steppers) */
       div[data-testid="stTextInput"] label p { font-size: 11.5px; margin-bottom: 1px; }
@@ -176,8 +176,9 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-tab_nav, tab_jd, tab_merge = st.tabs(
-    ["  Career Navigator  ", "  Job Description Analyzer  ", "  Role Merge Explorer  "])
+tab_nav, tab_jd, tab_merge, tab_about = st.tabs(
+    ["  Career Navigator  ", "  Job Description Analyzer  ",
+     "  Role Merge Explorer  ", "  About & Disclaimer  "])
 
 
 # ===========================================================================
@@ -203,7 +204,7 @@ with tab_nav:
 
     TOP_N = 4
 
-    section("Rate your skills · score out of 100")
+    section("Rate your skills · score out of 10")
 
     # user-friendly skill groups (id lists) - defines display order + headings
     SKILL_GROUPS = [
@@ -220,9 +221,13 @@ with tab_nav:
     ]
 
     def _score(raw: str) -> int:
-        """Parse a skill box into a clamped 0-100 int; blank/invalid -> 0."""
+        """
+        Parse a 1-10 skill box and convert to the engine's 0-100 scale (x10).
+        Blank/invalid -> 0.
+        """
         try:
-            return max(0, min(100, int(float(raw))))
+            ten = max(0, min(10, float(raw)))
+            return int(round(ten * 10))
         except (ValueError, TypeError):
             return 0
 
@@ -252,7 +257,7 @@ with tab_nav:
             f"role={title}; years={years}; industry={industry}; "
             f"location={location}; remote={remote_pref}; skills={active_skills}"
         )
-        log_event("profile_analyzed",
+        log_event("profile_analyzed", sheet=SHEET_NAVIGATOR,
                   detail=f"match={result['current_role_match']}; skills={len(active_skills)}",
                   user_input=profile_summary,
                   output=f"match={result['current_role_match']}; "
@@ -328,8 +333,9 @@ with tab_nav:
                 stored_profile, top_n=TOP_N, direction=direction)
             st.session_state["recs"] = recs
             if get_recs:
-                log_event("recommendations_direction",
-                          detail=f"dir={direction}; top={[r['title'] for r in recs]}")
+                log_event("recommendations_direction", sheet=SHEET_NAVIGATOR,
+                          detail=f"dir={direction}",
+                          output=f"top={[r['title'] for r in recs]}")
         recs = st.session_state["recs"]
 
         df_recs = pd.DataFrame([
@@ -432,8 +438,9 @@ with tab_nav:
                         ans = chatmod.ask_gemini(q, facts, st.session_state["chat_history"])
                     st.markdown(ans)
                 st.session_state["chat_history"].append({"role": "assistant", "content": ans})
-                log_event("chat_message", detail=f"match={result['current_role_match']}",
-                          user_input=q[:500])
+                log_event("chat_message", sheet=SHEET_NAVIGATOR,
+                          detail=f"match={result['current_role_match']}",
+                          user_input=q[:500], output=ans[:1000])
             st.caption("Note: chat sends your computed results to Google Gemini. On the free "
                        "tier, Google may use inputs to improve their products.")
 
@@ -470,7 +477,7 @@ with tab_jd:
         )
         log_event("jd_analyzed",
                   detail=f"takeover={jd['ai_takeover_pct']}; tasks={jd['tasks_detected']}",
-                  user_input=jd_text, output=jd_output)
+                  user_input=jd_text, output=jd_output, sheet=SHEET_JD)
         if jd["tasks_detected"] == 0:
             st.warning(jd["summary"])
         else:
@@ -543,8 +550,11 @@ with tab_merge:
             st.warning("Pick two different roles to merge.")
         else:
             res = merge_two_roles(role_map[role_a_title], role_map[role_b_title])
-            log_event("roles_merged", detail=f"{role_a_title} + {role_b_title}",
-                      output=f"merged={res['merged']['title']}; exposure={res['merged']['ai_exposure']}")
+            log_event("roles_merged",
+                      detail=f"{role_a_title} + {role_b_title}",
+                      user_input=f"{role_a_title} + {role_b_title}",
+                      output=f"merged={res['merged']['title']}; exposure={res['merged']['ai_exposure']}%",
+                      sheet=SHEET_MERGE)
 
             # --- the two source roles side by side ---
             def role_card(side: dict) -> str:
@@ -585,18 +595,18 @@ with tab_merge:
 
             skills_rows = "".join(
                 '<div style="display:flex;justify-content:space-between;gap:12px;'
-                'padding:5px 0;border-bottom:1px solid rgba(99,102,241,.12);font-size:13.5px;">'
+                'padding:5px 0;border-bottom:1px solid rgba(234,88,12,.15);font-size:13.5px;">'
                 f'<span style="color:#374151;">{s["label"]}</span>'
-                f'<b style="color:#4f46e5;">{s["level"]}</b></div>'
+                f'<b style="color:#ea580c;">{s["level"]}</b></div>'
                 for s in m["required_skills"])
             st.markdown(
-                '<div class="card" style="background:linear-gradient(135deg,#f5f3ff,#eef2ff);">'
+                '<div class="card" style="background:linear-gradient(135deg,#fff7ed,#ffedd5);">'
                 f'<h4 style="margin:0 0 4px;">New role</h4>'
-                f'<p style="font-size:20px;font-weight:800;color:#6d28d9;margin:2px 0 8px;">{m["title"]}</p>'
+                f'<p style="font-size:20px;font-weight:800;color:#c2410c;margin:2px 0 8px;">{m["title"]}</p>'
                 f'<p class="muted" style="margin:0 0 12px;">Overall AI exposure: '
                 f'<b>{m["ai_exposure"]}%</b> · the rest stays human.</p>'
                 f'<p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;'
-                f'color:#4f46e5;margin:6px 0 2px;">Skills the merged role requires</p>'
+                f'color:#ea580c;margin:6px 0 2px;">Skills the merged role requires</p>'
                 '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px;">'
                 f'{skills_rows}'
                 '</div>'
@@ -618,6 +628,43 @@ with tab_merge:
             st.caption("Merged skills combine the human-critical skills of both roles plus "
                        "AI-orchestration skills (GenAI, prompting, agents) needed to "
                        "supervise the AI doing the routine work. Illustrative seed data.")
+
+
+# ===========================================================================
+# TAB 4: About & Disclaimer
+# ===========================================================================
+with tab_about:
+    section("About this tool")
+    st.markdown(
+        "**Data Career Navigator** is an exploratory, evidence-based tool that models how "
+        "data and AI-related roles may evolve as AI is adopted across businesses over the "
+        "next 1-2 years - including how roles could merge, shift, or change in emphasis."
+    )
+
+    section("Scope & limitations")
+    st.markdown(
+        "- **Prototype status.** This is a prototype built on limited, illustrative data. "
+        "It currently covers a limited set of data-related job profiles only.\n"
+        "- **Forward-looking perspective.** It is designed to explore how the job landscape "
+        "may change with AI - the merging and evolution of roles - rather than to describe "
+        "the market precisely as it is today.\n"
+        "- **Not career advice.** This tool is **not** a job recommendation, a hiring "
+        "decision aid, or a substitute for mentorship. Please treat all results with caution "
+        "and an open mind. **Do not make career decisions based solely on this tool.**\n"
+        "- **Data privacy.** This tool records the inputs you submit to help improve it. "
+        "Please **do not enter any personal or sensitive information** (names, contact "
+        "details, employer names, or anything that could identify you)."
+    )
+
+    section("How it works, in brief")
+    st.markdown(
+        "Roles are represented as skill profiles and scored with transparent, deterministic "
+        "math - so every number can be explained. An optional AI assistant (Google Gemini) "
+        "adds written summaries but never changes the underlying scores. Underlying data is "
+        "illustrative seed data and can be replaced with public sources (e.g. O*NET, BLS, "
+        "open job-postings datasets) to make the numbers authoritative."
+    )
+    st.caption("By using this tool you acknowledge the limitations and disclaimer above.")
 
 
 st.divider()

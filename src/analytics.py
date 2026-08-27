@@ -75,8 +75,15 @@ def _enabled() -> bool:
         return False
 
 
-def _build_worksheet():
-    """Authorize and return the target worksheet."""
+# Default worksheet (tab) names per app feature. Each tab logs to its own sheet.
+SHEET_NAVIGATOR = "Career Navigator"
+SHEET_JD = "JD Analyzer"
+SHEET_MERGE = "Role Merge"
+SHEET_DEFAULT = SHEET_NAVIGATOR
+
+
+def _open_spreadsheet():
+    """Authorize and return the spreadsheet handle."""
     import gspread
     from google.oauth2.service_account import Credentials
 
@@ -88,11 +95,17 @@ def _build_worksheet():
         dict(st.secrets["gcp_service_account"]), scopes=scopes
     )
     client = gspread.authorize(creds)
-    sh = client.open_by_key(st.secrets["analytics"]["sheet_key"])
-    ws_name = st.secrets["analytics"].get("worksheet")
-    ws = sh.worksheet(ws_name) if ws_name else sh.sheet1
+    return client.open_by_key(st.secrets["analytics"]["sheet_key"])
 
-    # Ensure a header row exists (only writes if the sheet is empty).
+
+def _build_worksheet(sheet_name: str):
+    """Get-or-create the named worksheet (tab) and ensure a header row."""
+    sh = _open_spreadsheet()
+    try:
+        ws = sh.worksheet(sheet_name)
+    except Exception:
+        # tab doesn't exist yet -> create it
+        ws = sh.add_worksheet(title=sheet_name, rows=1000, cols=len(_HEADERS))
     try:
         if not ws.get_all_values():
             ws.append_row(_HEADERS)
@@ -101,28 +114,26 @@ def _build_worksheet():
     return ws
 
 
-# Cache the authorized worksheet across reruns when Streamlit is available.
+# Cache the authorized worksheet PER NAME across reruns.
 if st is not None:
-    _worksheet = st.cache_resource(_build_worksheet)
+    _get_worksheet = st.cache_resource(_build_worksheet)
 else:  # pragma: no cover
-    _worksheet = _build_worksheet
+    _get_worksheet = _build_worksheet
 
 
 def log_event(event: str, detail: str = "", user_input: str = "",
-              output: str = "") -> None:
+              output: str = "", sheet: str = SHEET_DEFAULT) -> None:
     """
-    Record one usage event. Best-effort; never crashes the app.
+    Record one usage event to a specific worksheet (tab). Best-effort; never
+    crashes the app.
 
     Parameters
     ----------
-    event : short event type, e.g. "app_open", "profile_analyzed", "jd_analyzed",
-            "explain_viewed". Use a small, fixed vocabulary.
+    event : short event type, e.g. "profile_analyzed", "jd_analyzed", "roles_merged".
     detail : coarse computed metadata (e.g. matched role, takeover %).
-    user_input : the content the user submitted (structured profile summary or
-            pasted job description). Truncated to _MAX_INPUT_CHARS.
-            The app collects no names or personal identifiers.
-    output : a summary of what the agent returned to the user. Truncated to
-            _MAX_OUTPUT_CHARS.
+    user_input : the content the user submitted. Truncated to _MAX_INPUT_CHARS.
+    output : a summary of what the tool returned. Truncated to _MAX_OUTPUT_CHARS.
+    sheet : which worksheet/tab to log to (SHEET_NAVIGATOR / SHEET_JD / SHEET_MERGE).
     """
     if not _enabled():
         return
@@ -135,7 +146,7 @@ def log_event(event: str, detail: str = "", user_input: str = "",
             str(user_input)[:_MAX_INPUT_CHARS],
             str(output)[:_MAX_OUTPUT_CHARS],
         ]
-        _worksheet().append_row(row, value_input_option="RAW")
+        _get_worksheet(sheet).append_row(row, value_input_option="RAW")
     except Exception:
         # Never let analytics failures affect the user.
         return
