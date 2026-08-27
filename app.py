@@ -122,6 +122,19 @@ st.markdown(
       div[data-testid="stTextInput"] label p { font-size: 11.5px; margin-bottom: 1px; }
       div[data-testid="stTextInput"] input { padding: 3px 8px; }
       div[data-testid="stTextInput"] { margin-bottom: -4px; }
+
+      /* hide the marker div used to flag a scored skill box */
+      .scored-flag { display: none; }
+      /* light-orange tint for any skill box the user has scored (>0):
+         the marker div renders in the same column right after the input,
+         so we style the text-input that is a sibling preceding it. */
+      div[data-testid="column"]:has(> div div .scored-flag)
+        div[data-testid="stTextInput"] input {
+          background: #fff3e6;
+          border: 1px solid #f9a24b;
+          font-weight: 600;
+          color: #b45309;
+      }
     </style>
     """,
     unsafe_allow_html=True,
@@ -231,20 +244,58 @@ with tab_nav:
         except (ValueError, TypeError):
             return 0
 
+    # ids of every skill box, so the reset button knows what to clear
+    _all_skill_ids = [sid for _, ids in SKILL_GROUPS for sid in ids]
+
+    def _reset_skills() -> None:
+        """Clear every skill text box (called before rerun by the Reset button)."""
+        for sid in _all_skill_ids:
+            st.session_state[f"sk_{sid}"] = ""
+
+    # Reset button on top of the skill grid
+    rcol, _ = st.columns([1, 5])
+    with rcol:
+        st.button("↺ Reset skills", key="reset_skills", on_click=_reset_skills,
+                  use_container_width=True,
+                  help="Clear all skill scores you've entered.")
+
     skills: dict[str, int] = {}
     for group_name, ids in SKILL_GROUPS:
         st.markdown(f'<div class="skillgroup">{group_name}</div>', unsafe_allow_html=True)
         gcols = st.columns(6)
         for i, sid in enumerate(ids):
             with gcols[i % 6]:
+                key = f"sk_{sid}"
                 raw = st.text_input(labels.get(sid, sid), value="", placeholder="0",
-                                    key=f"sk_{sid}")
-                skills[sid] = _score(raw)
+                                    key=key)
+                score = _score(raw)
+                skills[sid] = score
+                # Tint boxes the user has actually scored (>0) light orange.
+                if score > 0:
+                    st.markdown(
+                        f'<div class="scored-flag" data-k="{key}"></div>',
+                        unsafe_allow_html=True,
+                    )
 
     st.write("")
     run = st.button("Analyze my career path", type="primary", use_container_width=True)
 
     if run:
+        active_skills = {k: v for k, v in skills.items() if v > 0}
+        # Require a current role + at least 3 skills before analyzing.
+        problems = []
+        if not title.strip():
+            problems.append("enter your current / most recent role")
+        if len(active_skills) < 3:
+            problems.append(f"score at least 3 skills (you've scored {len(active_skills)})")
+        if problems:
+            st.warning("Please " + " and ".join(problems) + " to get your results.")
+            # clear any previous results so nothing stale shows
+            st.session_state.pop("result", None)
+            st.session_state.pop("profile", None)
+            st.session_state.pop("recs", None)
+            st.stop()
+
         profile = {
             "title": title, "years_experience": years, "skills": skills,
             "industry": industry, "location": location,
@@ -252,7 +303,6 @@ with tab_nav:
         }
         result = analyze_profile(profile, top_n=TOP_N,
                                  direction=st.session_state.get("direction", "ic_tech"))
-        active_skills = {k: v for k, v in skills.items() if v > 0}
         profile_summary = (
             f"role={title}; years={years}; industry={industry}; "
             f"location={location}; remote={remote_pref}; skills={active_skills}"
@@ -289,160 +339,169 @@ with tab_nav:
                 unsafe_allow_html=True,
             )
 
-        # --- AI transformation ---
-        section("How AI is transforming your current role")
-        ai = result["ai_transformation"]
-        mcol, _ = st.columns([1, 2])
-        mcol.metric("Task transformation score", f"{ai['score']}/100", help=DEFN["transformation"])
-        st.caption(ai["framing"])
-        df_tasks = pd.DataFrame([
-            {"Task": t["task"], "AI impact": IMPACT_LABEL[t["impact"]],
-             "Exposure": t["exposure"], "What happens": t["what_happens"]}
-            for t in ai["tasks"]
-        ])
-        st.dataframe(
-            df_tasks, use_container_width=True, hide_index=True,
-            column_config={"Exposure": st.column_config.ProgressColumn(
-                "Exposure", help=DEFN["exposure"], min_value=0, max_value=100, format="%d")},
-        )
-
-        # --- Recommendations ---
-        section("Your top recommended next roles")
-        dcol, bcol = st.columns([3, 1])
-        with dcol:
-            direction = st.radio(
-                "Which direction do you want to grow?",
-                options=["ic_tech", "ic_nontech", "people"],
-                format_func=lambda a: {
-                    "ic_tech": "Individual Contributor · Tech",
-                    "ic_nontech": "Individual Contributor · Non-Tech",
-                    "people": "People Management",
-                }[a],
-                key="direction", horizontal=True,
-                help="We nudge your recommendations toward roles on this track.",
+        # --- AI transformation --- (collapsed by default)
+        with st.expander("How AI is transforming your current role", expanded=False):
+            ai = result["ai_transformation"]
+            mcol, _ = st.columns([1, 2])
+            mcol.metric("Task transformation score", f"{ai['score']}/100", help=DEFN["transformation"])
+            st.caption(ai["framing"])
+            df_tasks = pd.DataFrame([
+                {"Task": t["task"], "AI impact": IMPACT_LABEL[t["impact"]],
+                 "Exposure": t["exposure"], "What happens": t["what_happens"]}
+                for t in ai["tasks"]
+            ])
+            st.dataframe(
+                df_tasks, use_container_width=True, hide_index=True,
+                column_config={"Exposure": st.column_config.ProgressColumn(
+                    "Exposure", help=DEFN["exposure"], min_value=0, max_value=100, format="%d")},
             )
-        with bcol:
-            st.write("")
-            get_recs = st.button("Get recommendations", type="primary",
-                                 key="get_recs", use_container_width=True)
 
         stored_profile = st.session_state["profile"]  # guaranteed by the block guard
 
-        if get_recs or "recs" not in st.session_state:
-            recs = recommend_transitions(
-                stored_profile, top_n=TOP_N, direction=direction)
+        # --- Recommendations --- (collapsed by default)
+        with st.expander("Your top recommended next roles", expanded=False):
+            dcol, bcol = st.columns([3, 1])
+            with dcol:
+                direction = st.radio(
+                    "Which direction do you want to grow?",
+                    options=["ic_tech", "ic_nontech", "people"],
+                    format_func=lambda a: {
+                        "ic_tech": "Individual Contributor · Tech",
+                        "ic_nontech": "Individual Contributor · Non-Tech",
+                        "people": "People Management",
+                    }[a],
+                    key="direction", horizontal=True,
+                    help="We nudge your recommendations toward roles on this track.",
+                )
+            with bcol:
+                st.write("")
+                get_recs = st.button("Get recommendations", type="primary",
+                                     key="get_recs", use_container_width=True)
+
+            if get_recs or "recs" not in st.session_state:
+                recs = recommend_transitions(
+                    stored_profile, top_n=TOP_N, direction=direction)
+                st.session_state["recs"] = recs
+                if get_recs:
+                    log_event("recommendations_direction", sheet=SHEET_NAVIGATOR,
+                              detail=f"dir={direction}",
+                              output=f"top={[r['title'] for r in recs]}")
+            recs = st.session_state["recs"]
+
+            df_recs = pd.DataFrame([
+                {"Role": r["title"], "Transition": r["transition_score"],
+                 "Future Fit": r["future_fit"],
+                 "Skill shortfall": r["transition_detail"]["skill_shortfall"],
+                 "Est. time": r["estimated_time"]}
+                for r in recs
+            ])
+            st.dataframe(
+                df_recs, use_container_width=True, hide_index=True,
+                column_config={
+                    "Transition": st.column_config.ProgressColumn(
+                        "Transition", help=DEFN["transition"], min_value=0, max_value=100, format="%d"),
+                    "Future Fit": st.column_config.ProgressColumn(
+                        "Future Fit", help=DEFN["future_fit"], min_value=0, max_value=100, format="%d"),
+                    "Skill shortfall": st.column_config.NumberColumn(
+                        "Skill shortfall", help=DEFN["skill_shortfall"]),
+                },
+            )
+
+        # recompute direction/recs outside the expander in case it was collapsed
+        direction = st.session_state.get("direction", "ic_tech")
+        recs = st.session_state.get("recs")
+        if recs is None:
+            recs = recommend_transitions(stored_profile, top_n=TOP_N, direction=direction)
             st.session_state["recs"] = recs
-            if get_recs:
-                log_event("recommendations_direction", sheet=SHEET_NAVIGATOR,
-                          detail=f"dir={direction}",
-                          output=f"top={[r['title'] for r in recs]}")
-        recs = st.session_state["recs"]
 
-        df_recs = pd.DataFrame([
-            {"Role": r["title"], "Transition": r["transition_score"],
-             "Future Fit": r["future_fit"],
-             "Skill shortfall": r["transition_detail"]["skill_shortfall"],
-             "Est. time": r["estimated_time"]}
-            for r in recs
-        ])
-        st.dataframe(
-            df_recs, use_container_width=True, hide_index=True,
-            column_config={
-                "Transition": st.column_config.ProgressColumn(
-                    "Transition", help=DEFN["transition"], min_value=0, max_value=100, format="%d"),
-                "Future Fit": st.column_config.ProgressColumn(
-                    "Future Fit", help=DEFN["future_fit"], min_value=0, max_value=100, format="%d"),
-                "Skill shortfall": st.column_config.NumberColumn(
-                    "Skill shortfall", help=DEFN["skill_shortfall"]),
-            },
-        )
-
-        # --- Merged future role (role evolution) ---
+        # --- Merged future role (role evolution) --- (collapsed by default)
         evo = analyze_role_evolution(stored_profile, direction)
         ss = evo["seniority_shift"]
         mg = evo["merged"]
-        section("Your merged future role")
+        with st.expander("Your merged future role", expanded=False):
+            # Seniority-shift headline (short, as regular text)
+            st.markdown(f"**{ss['headline']}**")
 
-        # Seniority-shift headline (short, as regular text)
-        st.markdown(f"**{ss['headline']}**")
+            if mg:
+                st.markdown(f"**Going the {mg['direction_label']} track**")
+                st.markdown(
+                    f"{mg['from_role']} → merges with {mg['partner_role']} → "
+                    f"**{mg['merged_title']}**"
+                )
+                st.markdown(mg["rationale"])
 
-        if mg:
-            st.markdown(f"**Going the {mg['direction_label']} track**")
-            st.markdown(
-                f"{mg['from_role']} → merges with {mg['partner_role']} → "
-                f"**{mg['merged_title']}**"
-            )
-            st.markdown(mg["rationale"])
+        # --- Deep dive --- (collapsed by default)
+        with st.expander("Explore any recommended role in detail", expanded=False):
+            role_titles = [r["title"] for r in recs]
+            chosen = st.selectbox("Choose a role to explore", role_titles, key="deepdive")
+            r = next(x for x in recs if x["title"] == chosen)
 
-        # --- Deep dive ---
-        section("Explore any recommended role in detail")
-        role_titles = [r["title"] for r in recs]
-        chosen = st.selectbox("Choose a role to explore", role_titles, key="deepdive")
-        r = next(x for x in recs if x["title"] == chosen)
+            m1, m2, m3, m4 = st.columns(4)
+            m1.metric("Transition", f"{r['transition_score']}/100", help=DEFN["transition"])
+            m2.metric("Future Fit", f"{r['future_fit']}/100", help=DEFN["future_fit"])
+            m3.metric("Remote Fit", f"{r['remote_fit']}/100", help=DEFN["remote_fit"])
+            m4.metric("Est. time", r["estimated_time"], help=DEFN["est_time"])
+            st.markdown(f'<p class="muted">O*NET occupation: {r["onet_code"]} · {r["remote_note"]}</p>',
+                        unsafe_allow_html=True)
 
-        m1, m2, m3, m4 = st.columns(4)
-        m1.metric("Transition", f"{r['transition_score']}/100", help=DEFN["transition"])
-        m2.metric("Future Fit", f"{r['future_fit']}/100", help=DEFN["future_fit"])
-        m3.metric("Remote Fit", f"{r['remote_fit']}/100", help=DEFN["remote_fit"])
-        m4.metric("Est. time", r["estimated_time"], help=DEFN["est_time"])
-        st.markdown(f'<p class="muted">O*NET occupation: {r["onet_code"]} · {r["remote_note"]}</p>',
-                    unsafe_allow_html=True)
-
-        gcol1, gcol2 = st.columns(2)
-        have_rows = "".join(
-            f'<div class="row"><span>{h["label"]}</span><b>{int(h["current"])}</b></div>'
-            for h in r["skill_gap"]["have"][:10]) or '<div class="row muted">-</div>'
-        gcol1.markdown(
-            f'<div class="bucket b-strong"><h4>✅ You already have</h4>{have_rows}</div>',
-            unsafe_allow_html=True)
-        need_rows = "".join(
-            f'<div class="row"><span>{n["label"]}</span><b>{int(n["current"])} → {int(n["required"])}</b></div>'
-            for n in r["skill_gap"]["need"]) or '<div class="row muted">You\'re well covered.</div>'
-        gcol2.markdown(
-            f'<div class="bucket b-mod"><h4>📈 You need to build</h4>{need_rows}</div>',
-            unsafe_allow_html=True)
-
-        st.write("")
-        st.markdown('<div class="sec-sub" style="margin-left:0;font-weight:600;color:#1e2233;">90-day transition plan</div>',
-                    unsafe_allow_html=True)
-        rm = r["roadmap"]
-        p1, p2, p3 = st.columns(3)
-        for col, key, head in [(p1, "days_1_30", "Days 1-30"), (p2, "days_31_60", "Days 31-60"), (p3, "days_61_90", "Days 61-90")]:
-            items = "".join(f"<li>{f}</li>" for f in rm[key]["focus"])
-            col.markdown(
-                f'<div class="card"><h4>{head} · {rm[key]["theme"]}</h4><ul>{items}</ul></div>',
+            gcol1, gcol2 = st.columns(2)
+            have_rows = "".join(
+                f'<div class="row"><span>{h["label"]}</span><b>{int(h["current"])}</b></div>'
+                for h in r["skill_gap"]["have"][:10]) or '<div class="row muted">-</div>'
+            gcol1.markdown(
+                f'<div class="bucket b-strong"><h4>✅ You already have</h4>{have_rows}</div>',
+                unsafe_allow_html=True)
+            need_rows = "".join(
+                f'<div class="row"><span>{n["label"]}</span><b>{int(n["current"])} → {int(n["required"])}</b></div>'
+                for n in r["skill_gap"]["need"]) or '<div class="row muted">You\'re well covered.</div>'
+            gcol2.markdown(
+                f'<div class="bucket b-mod"><h4>📈 You need to build</h4>{need_rows}</div>',
                 unsafe_allow_html=True)
 
+            st.write("")
+            st.markdown('<div class="sec-sub" style="margin-left:0;font-weight:600;color:#1e2233;">90-day transition plan</div>',
+                        unsafe_allow_html=True)
+            rm = r["roadmap"]
+            p1, p2, p3 = st.columns(3)
+            for col, key, head in [(p1, "days_1_30", "Days 1-30"), (p2, "days_31_60", "Days 31-60"), (p3, "days_61_90", "Days 61-90")]:
+                items = "".join(f"<li>{f}</li>" for f in rm[key]["focus"])
+                col.markdown(
+                    f'<div class="card"><h4>{head} · {rm[key]["theme"]}</h4><ul>{items}</ul></div>',
+                    unsafe_allow_html=True)
+
         # --- Ask the assistant (optional Gemini chat, grounded in the results) ---
-        section("Ask about your results",
-                "Chat with an assistant that knows your computed results above. "
-                "It explains the numbers - it can't invent new ones.")
-        if not chatmod.gemini_available():
-            st.caption("💬 The chat assistant is off. Add a Gemini API key in the app's "
-                       "Secrets ([gemini] api_key) to enable it. Everything above works without it.")
-        else:
-            facts = chatmod.build_facts(result, recs, mg, ss)
-            if "chat_history" not in st.session_state:
-                st.session_state["chat_history"] = []
-            for turn in st.session_state["chat_history"]:
-                with st.chat_message(turn["role"],
-                                     avatar="🧭" if turn["role"] == "assistant" else "🧑"):
-                    st.markdown(turn["content"])
-            q = st.chat_input("e.g. Why is that my best move? What should I learn first?")
-            if q:
-                st.session_state["chat_history"].append({"role": "user", "content": q})
-                with st.chat_message("user", avatar="🧑"):
-                    st.markdown(q)
-                with st.chat_message("assistant", avatar="🧭"):
-                    with st.spinner("Thinking..."):
-                        ans = chatmod.ask_gemini(q, facts, st.session_state["chat_history"])
-                    st.markdown(ans)
-                st.session_state["chat_history"].append({"role": "assistant", "content": ans})
-                log_event("chat_message", sheet=SHEET_NAVIGATOR,
-                          detail=f"match={result['current_role_match']}",
-                          user_input=q[:500], output=ans[:1000])
-            st.caption("Note: chat sends your computed results to Google Gemini. On the free "
-                       "tier, Google may use inputs to improve their products.")
+        # Hidden from users for now. Set SHOW_CHAT = True to re-enable.
+        SHOW_CHAT = False
+        if SHOW_CHAT:
+            section("Ask about your results",
+                    "Chat with an assistant that knows your computed results above. "
+                    "It explains the numbers - it can't invent new ones.")
+            if not chatmod.gemini_available():
+                st.caption("💬 The chat assistant is off. Add a Gemini API key in the app's "
+                           "Secrets ([gemini] api_key) to enable it. Everything above works without it.")
+            else:
+                facts = chatmod.build_facts(result, recs, mg, ss)
+                if "chat_history" not in st.session_state:
+                    st.session_state["chat_history"] = []
+                for turn in st.session_state["chat_history"]:
+                    with st.chat_message(turn["role"],
+                                         avatar="🧭" if turn["role"] == "assistant" else "🧑"):
+                        st.markdown(turn["content"])
+                q = st.chat_input("e.g. Why is that my best move? What should I learn first?")
+                if q:
+                    st.session_state["chat_history"].append({"role": "user", "content": q})
+                    with st.chat_message("user", avatar="🧑"):
+                        st.markdown(q)
+                    with st.chat_message("assistant", avatar="🧭"):
+                        with st.spinner("Thinking..."):
+                            ans = chatmod.ask_gemini(q, facts, st.session_state["chat_history"])
+                        st.markdown(ans)
+                    st.session_state["chat_history"].append({"role": "assistant", "content": ans})
+                    log_event("chat_message", sheet=SHEET_NAVIGATOR,
+                              detail=f"match={result['current_role_match']}",
+                              user_input=q[:500], output=ans[:1000])
+                st.caption("Note: chat sends your computed results to Google Gemini. On the free "
+                           "tier, Google may use inputs to improve their products.")
 
 
 # ===========================================================================
